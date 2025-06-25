@@ -174,6 +174,9 @@ obj-$(CONFIG_AXP288_CHARGER)	+= axp288_charger.o
 # HS03s for SR-AL5628-01-162 by zhangjiangbin at 20220915 start
 obj-$(CONFIG_CHARGER_HARDINFO) += hardinfo_charger.o
 # HS03s for SR-AL5628-01-162 by zhangjiangbin at 20220915 end
+# Tab A7 lite_U code for AX3565AU-313 by shanxinkai at 20240120 start
+obj-$(CONFIG_BATT_TIME_TO_FULL) += gxy_battery_ttf.o
+# Tab A7 lite_U code for AX3565AU-313 by shanxinkai at 20240120 end
 
 ifeq ($(CONFIG_CUSTOM_BATTERY_EXTERNAL_CHANNEL),y)
 	obj-y += k6885v1_64_alpha/

@@ -1012,6 +1012,9 @@ struct mtk_battery {
 	#ifndef HQ_FACTORY_BUILD
 	int cust_batt_cap;
 	int batt_full_flag;
+	/* Tab A7 lite_U code for AX3565AU-313 by shanxinkai at 20240120 start */
+	int cust_batt_rechg;
+	/* Tab A7 lite_U code for AX3565AU-313 by shanxinkai at 20240120 end */
 	#endif
 	/* TabA7 Lite code for OT8-5454 by shixuanxuan at 20220401 end */
 #endif
