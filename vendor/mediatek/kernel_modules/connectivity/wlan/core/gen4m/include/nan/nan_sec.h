@@ -159,7 +159,7 @@ uint32_t nanSecNotifyMsgBodyRdy(struct _NAN_NDP_INSTANCE_T *prNdp,
 				uint8_t u1SrcMsg, uint32_t u4TxMsgLen,
 				uint8_t *pu1TxMsgBuf);
 
-void nan_sec_wpa_supplicant_start(struct GLUE_INFO *prGlueInfo);
+void nan_sec_wpa_supplicant_start(void);
 void nan_sec_hostapd_deinit(void);
 uint32_t nanSecInsertCipherList(uint32_t u4CipherType,
 				uint16_t u2PublishId);

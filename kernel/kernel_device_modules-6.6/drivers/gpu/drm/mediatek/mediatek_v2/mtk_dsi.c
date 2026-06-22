@@ -5732,13 +5732,14 @@ static int mtk_dsi_wait_cmd_frame_done(struct mtk_dsi *dsi,
 		//	mtk_crtc->gce_obj.event[EVENT_STREAM_DIRTY]);
 		//cmdq_pkt_wait_no_clear(handle,
 		//	mtk_crtc->gce_obj.event[EVENT_CMD_EOF]);
-		cmdq_pkt_sleep(handle, CMDQ_US_TO_TICK(16600), CMDQ_GPR_R06);
-		cmdq_pkt_wait_no_clear(handle,
-			mtk_crtc->gce_obj.event[EVENT_STREAM_EOF]);
-		cmdq_pkt_clear_event(handle,
-			mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
+		if (mtk_crtc->config_cnt != 0) {
+			cmdq_pkt_sleep(handle, CMDQ_US_TO_TICK(16600), CMDQ_GPR_R06);
+			cmdq_pkt_wait_no_clear(handle,
+				mtk_crtc->gce_obj.event[EVENT_STREAM_EOF]);
+			cmdq_pkt_clear_event(handle,
+				mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
+		}
 	}
-
 	cmdq_pkt_flush(handle);
 	cmdq_pkt_destroy(handle);
 	return 0;
@@ -8158,6 +8159,11 @@ static void mtk_dsi_cmdq_gce(struct mtk_dsi *dsi, struct cmdq_pkt *handle,
 		return;
 	}
 
+#if defined(CUSTOMER_USE_SIMPLE_API)
+	if ((!(msg->flags & MIPI_DSI_MSG_USE_LPM)))
+		config |= HSTX;
+#endif
+
 	if (MTK_DSI_HOST_IS_READ(type))
 		config = BTA;
 	else
@@ -8786,9 +8792,6 @@ void mipi_dsi_dcs_write_gce2_type(struct mtk_dsi *dsi, struct cmdq_pkt *handle,
 	}
 
 	if (dsi_mode == 0) {
-		mtk_crtc_pkt_create(&handle, &mtk_crtc->base,
-			mtk_crtc->gce_obj.client[CLIENT_CFG]);
-
 		mtk_dsi_power_keep_gce(dsi, handle, true);
 		mtk_dsi_poll_for_idle(dsi, handle);
 

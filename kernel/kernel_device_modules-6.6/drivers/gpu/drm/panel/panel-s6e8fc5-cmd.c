@@ -412,7 +412,7 @@ static int lcm_enable(struct drm_panel *panel)
 
 static struct drm_display_mode default_mode = {
 //	.clock = 355999,// Pixel Clock = vtotal(2464) * htotal * vrefresh(90) / 1000;
-	.clock = 177999,// Pixel Clock = vtotal(2464) * htotal * vrefresh(90) / 1000;
+	.clock = 214722,// Pixel Clock = vtotal(2464) * htotal * vrefresh(90) / 1000;
 	.hdisplay = HAC,
 	.hsync_start = HAC + HFP,
 	.hsync_end = HAC + HFP + HSA,

@@ -439,8 +439,12 @@ void roamingFsmSteps(IN struct ADAPTER *prAdapter,
 	enum ENUM_ROAMING_STATE ePreviousState;
 	u_int8_t fgIsTransition = (u_int8_t) FALSE;
 	u_int32_t u4ScnResultsTimeout = prAdapter->rWifiVar.u4DiscoverTimeout;
+	struct CONNECTION_SETTINGS *prConnSettings;
+	struct AIS_FSM_INFO *prAisFsmInfo;
 
 	prRoamingFsmInfo = aisGetRoamingInfo(prAdapter, ucBssIndex);
+	prConnSettings = aisGetConnSettings(prAdapter, ucBssIndex);
+	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 	do {
 
 		/* Do entering Next State */
@@ -472,6 +476,9 @@ void roamingFsmSteps(IN struct ADAPTER *prAdapter,
 			GET_CURRENT_SYSTIME(
 				&prRoamingFsmInfo->rRoamingLastDecisionTime);
 #endif
+			prConnSettings->eConnectionPolicy =
+				CONNECT_BY_SSID_BEST_RSSI;
+			prAisFsmInfo->rJoinReqTime = 0;
 			prRoamingFsmInfo->eReason = ROAMING_REASON_POOR_RCPI;
 			break;
 
@@ -578,7 +585,7 @@ void roamingFsmRunEventStart(IN struct ADAPTER *prAdapter,
 	"Band2-CU-Factor-Val-Score(1/2):%d/%d-%u/%u " \
 
 	DBGLOG(ROAMING, EVENT, TEMP_LOG_TEMPLATE,
-	       prWifiVar->ucRCMinRoamDetla, prWifiVar->ucRCDelta,
+	       prWifiVar->ucRCMinRoamDelta, prWifiVar->ucRCDelta,
 	       prWifiVar->ucRIDelta, prWifiVar->cRBMinRssi,
 	       prWifiVar->ucRBTMDelta, prWifiVar->ucRssiWeight,
 	       prWifiVar->ucCUWeight, prWifiVar->cB1RssiFactorVal1,

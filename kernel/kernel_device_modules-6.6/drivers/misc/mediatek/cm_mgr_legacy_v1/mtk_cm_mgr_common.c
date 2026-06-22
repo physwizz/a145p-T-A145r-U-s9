@@ -165,7 +165,11 @@ int cpu_power_bcpu_weight_min = 100;
 #endif
 int cpu_power_bbcpu_weight_max = 100;
 int cpu_power_bbcpu_weight_min = 100;
+#ifdef USE_CPU_TO_DRAM_MAP
+int cm_mgr_cpu_map_dram_enable = 1;
+#else
 int cm_mgr_cpu_map_dram_enable;
+#endif
 int cm_mgr_cpu_map_emi_opp = 1;
 int cm_mgr_cpu_map_skip_cpu_opp = 2;
 unsigned int cm_work_flag;
@@ -1089,6 +1093,7 @@ int cm_mgr_check_dts_setting(struct platform_device *pdev)
 	const char *buf;
 	int ret;
 	int opp_count;
+	int i = 0;
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "cm_mgr_base");
 	cm_mgr_base = devm_ioremap_resource(dev, res);
@@ -1128,6 +1133,9 @@ int cm_mgr_check_dts_setting(struct platform_device *pdev)
 		ret = of_property_read_u32_array(node, "cm-mgr-cpu-opp-to-dram",
 				cm_mgr_cpu_opp_to_dram, cm_mgr_cpu_opp_size);
 	}
+
+	for (i = 0; i < opp_count; i++)
+		pr_info("#@# %s(%d) cm_mgr_cpu_opp_to_dram %d  %d\n",__func__, __LINE__, i, cm_mgr_cpu_opp_to_dram[i]);
 
 	ret = of_property_read_string(node,
 			"status", (const char **)&buf);

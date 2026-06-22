@@ -131,8 +131,7 @@ static int shutdown_event_handler(struct mtk_battery *gm)
 			tmp_duraction = ktime_to_timespec64(duraction);
 			polling++;
 			if (is_single && tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-				pr_err("soc zero shutdown\n");
-				kernel_power_off();
+				pr_debug("soc zero notify zero percent after %d\n", (int)tmp_duraction.tv_sec);
 				return next_waketime(polling);
 			}
 		} else if (current_soc > 0) {
@@ -154,8 +153,7 @@ static int shutdown_event_handler(struct mtk_battery *gm)
 
 			tmp_duraction = ktime_to_timespec64(duraction);
 			if (is_single && tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-				pr_err("uisoc one percent shutdown\n");
-				kernel_power_off();
+				pr_debug("uisoc one notify zero percent after %d\n", (int)tmp_duraction.tv_sec);
 				return next_waketime(polling);
 			}
 		} else if (now_current > 0 && current_soc > 0) {
@@ -252,9 +250,8 @@ static int shutdown_event_handler(struct mtk_battery *gm)
 
 				tmp_duraction  = ktime_to_timespec64(duraction);
 				if (is_single && tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-					pr_err("low bat shutdown, over %d second\n",
+					pr_debug("low bat zero percent, over %d second\n",
 						SHUTDOWN_TIME);
-					kernel_power_off();
 					return next_waketime(polling);
 				}
 			}
@@ -334,8 +331,7 @@ static int bm_shutdown_event_handler(struct mtk_battery_manager *bm)
 			tmp_duraction = ktime_to_timespec64(duraction);
 			polling++;
 			if (tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-				pr_err("soc zero shutdown\n");
-				kernel_power_off();
+				pr_debug("soc zero notify zero percent after %d\n", (int)tmp_duraction.tv_sec);
 				return polling;
 			}
 		} else if (current_gm1_soc > 0 && current_gm2_soc > 0) {
@@ -366,8 +362,7 @@ static int bm_shutdown_event_handler(struct mtk_battery_manager *bm)
 			polling++;
 			tmp_duraction = ktime_to_timespec64(duraction);
 			if (tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-				pr_err("uisoc one percent shutdown\n");
-				kernel_power_off();
+				pr_debug("uisoc one notify zero percent after %d\n", (int)tmp_duraction.tv_sec);
 				return polling;
 			}
 		} else if (now_current1 > 0 && now_current2 > 0 &&
@@ -470,9 +465,8 @@ static int bm_shutdown_event_handler(struct mtk_battery_manager *bm)
 				tmp_duraction  = ktime_to_timespec64(duraction);
 				polling++;
 				if (tmp_duraction.tv_sec >= SHUTDOWN_TIME) {
-					pr_err("low bat shutdown, over %d second\n",
+					pr_debug("low bat notify zero percent, over %d second\n",
 						SHUTDOWN_TIME);
-					kernel_power_off();
 					return polling;
 				}
 			}
@@ -1071,10 +1065,7 @@ static int bm_update_psy_property(struct mtk_battery *gm, enum bm_psy_prop prop)
 		ret_val = battery_get_int_property(gm, BAT_PROP_TEMPERATURE);
 		break;
 	case QMAX_DESIGN:
-		if (gm->battery_id < 0 || gm->battery_id >= TOTAL_BATTERY_NUMBER)
-			ret_val = gm->fg_table_cust_data.fg_profile[0].q_max * 10;
-		else
-			ret_val = gm->fg_table_cust_data.fg_profile[gm->battery_id].q_max * 10;
+		ret_val = gm->fg_table_cust_data.fg_profile[0].q_max * 10;
 		break;
 	case QMAX:
 		ret_val = gm->daemon_data.qmxa_t_0ma;

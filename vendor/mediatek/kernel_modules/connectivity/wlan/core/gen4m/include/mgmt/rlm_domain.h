@@ -22,17 +22,12 @@
  */
  #include "wsys_cmd_handler_fw.h"
 
-#if (CFG_SUPPORT_PWR_LMT_EMI == 1)
-#include "rlm_txpwr_limit_emi.h"
-#else
-#include "rlm_txpwr_limit.h"
-#endif
 /*******************************************************************************
  *   C O N S T A N T S
  *******************************************************************************
  */
 #if (CFG_SUPPORT_WIFI_6G == 1)
-#define MAX_SUBBAND_NUM     7
+#define MAX_SUBBAND_NUM     8
 #else
 #define MAX_SUBBAND_NUM     6
 #endif
@@ -573,6 +568,8 @@
 #define UNII2C_UPPER_BOUND   144
 #define UNII3_LOWER_BOUND    149
 #define UNII3_UPPER_BOUND    165
+#define UNII4_LOWER_BOUND    167
+#define UNII4_UPPER_BOUND    177
 /*6G SubBand spec*/
 #define UNII5A_LOWER_BOUND   1
 #define UNII5A_UPPER_BOUND   47
@@ -602,7 +599,7 @@
 /*align Frimware Max Power Limit CH Num*/
 #define MAX_CMD_SUPPORT_CHANNEL_NUM			61
 #if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
-#define MAX_CMD_EHT_SUPPORT_CHANNEL_NUM	 32
+#define MAX_CMD_EHT_SUPPORT_CHANNEL_NUM	 38
 #if (CFG_SUPPORT_WIFI_6G == 1)
 #define MAX_CMD_EHT_6G_SUPPORT_CHANNEL_NUM	 29
 #endif /* CFG_SUPPORT_WIFI_6G && CFG_SUPPORT_PWR_LIMIT_EHT */
@@ -623,7 +620,6 @@
  *  D A T A   T Y P E S
  *******************************************************************************
  */
-
 #if CFG_SUPPORT_PWR_LIMIT_COUNTRY
 
 /* Define Tx Power Control Channel Type */
@@ -664,11 +660,6 @@
 #define PWR_CFG_PRAM_NUM_ALL_RATE	1
 
 #define PWR_CFG_PRAM_NUM_AX		   18
-#if (CFG_SUPPORT_DYNA_TX_PWR_CTRL_11AC_V2_SETTING == 1)
-#define	PWR_CFG_PRAM_NUM_AC			12
-#else
-#define	PWR_CFG_PRAM_NUM_AC			9
-#endif /* CFG_SUPPORT_DYNA_TX_PWR_CTRL_11AC_V2_SETTING */
 
 #define PWR_CFG_BACKOFF_MIN		-64
 #define PWR_CFG_BACKOFF_MAX		64
@@ -694,9 +685,12 @@
 #define COUNTRY_LMT_CH_GRP_KEY_5G_UNII_4    -6 /* 5G 149~165 */
 #define COUNTRY_LMT_CH_GRP_KEY_6G_ALL       -7 /* 6G 1~233 */
 #define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_5    -8 /* 6G 1~93 */
-#define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_6    -9 /* 6G 95~115 */
-#define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_7    -10 /* 6G 117~185 */
+#define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_6    -9 /* 6G 95~113 */
+#define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_7    -10 /* 6G 115~185 */
 #define COUNTRY_LMT_CH_GRP_KEY_6G_UNII_8    -11 /* 6G 187~233 */
+
+/* dynamic tx power common interface with fw*/
+#define ANT_EXT_BIT_ANTSWAP_AUX 7
 
 enum ENUM_TX_POWER_CTRL_LIST_TYPE {
 	PWR_CTRL_TYPE_DEFAULT_LIST = 0,
@@ -750,14 +744,194 @@ enum ENUM_TX_POWER_CTRL_CHANNEL_TYPE {
 #endif
 };
 
-enum ENUM_POWER_TAG_CATEGORY {
-	POWER_TAG_CATEGORY_ANT = 0,
-	POWER_TAG_CATEGORY_MULTIBAND = 1,
-	POWER_TAG_CATEGORY_NUM
+enum ENUM_POWER_LIMIT {
+	PWR_LIMIT_CCK_L,
+	PWR_LIMIT_CCK_H,
+	PWR_LIMIT_OFDM_L,
+	PWR_LIMIT_OFDM_H,
+	PWR_LIMIT_20M_L,
+	PWR_LIMIT_20M_H,
+	PWR_LIMIT_40M_L,
+	PWR_LIMIT_40M_H,
+	PWR_LIMIT_80M_L,
+	PWR_LIMIT_80M_H,
+	PWR_LIMIT_160M_L,
+	PWR_LIMIT_160M_H,
+	PWR_LIMIT_NUM,
+	PWR_LIMIT_LEGACY_6G_NUM = PWR_LIMIT_NUM,
 };
+#define PWR_LIMIT_PARSER_LEGACY_NUM (PWR_LIMIT_NUM - 3)
+#define PWR_LIMIT_PARSER_LEGACY_NUM_V2 (PWR_LIMIT_NUM)
 
+enum ENUM_POWER_LIMIT_HE {
+	PWR_LIMIT_RU26_L, /* MCS0~4 */
+	PWR_LIMIT_RU26_H, /* MCS5~9 */
+	PWR_LIMIT_RU26_U, /* MCS10~11 */
+
+	PWR_LIMIT_RU52_L, /* MCS0~4 */
+	PWR_LIMIT_RU52_H, /* MCS5~9 */
+	PWR_LIMIT_RU52_U, /* MCS10~11 */
+
+	PWR_LIMIT_RU106_L, /* MCS0~4 */
+	PWR_LIMIT_RU106_H, /* MCS5~9 */
+	PWR_LIMIT_RU106_U, /* MCS10~11 */
+
+	PWR_LIMIT_RU242_L, /* MCS0~4 */
+	PWR_LIMIT_RU242_H, /* MCS5~9 */
+	PWR_LIMIT_RU242_U, /* MCS10~11 */
+
+	PWR_LIMIT_RU484_L, /* MCS0~4 */
+	PWR_LIMIT_RU484_H, /* MCS5~9 */
+	PWR_LIMIT_RU484_U, /* MCS10~11 */
+
+	PWR_LIMIT_RU996_L, /* MCS0~4 */
+	PWR_LIMIT_RU996_H, /* MCS5~9 */
+	PWR_LIMIT_RU996_U, /* MCS10~11 */
+	PWR_LIMIT_HE_NUM,
+	PWR_LIMIT_RU1992_L = PWR_LIMIT_HE_NUM, /* MCS0~4 */
+	PWR_LIMIT_RU1992_H, /* MCS5~9 */
+	PWR_LIMIT_RU1992_U, /* MCS10~11 */
+	PWR_LIMIT_6E_NUM,
+	PWR_LIMIT_HE_BW160_NUM = PWR_LIMIT_6E_NUM,
+};
+#define PWR_LIMIT_PARSER_HE_NUM (PWR_LIMIT_HE_NUM)
+#define PWR_LIMIT_PARSER_HE160_NUM (PWR_LIMIT_HE_BW160_NUM)
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+enum ENUM_POWER_LIMIT_EHT {
+	PWR_LIMIT_EHT26_L, /* MCS0~4 */
+	PWR_LIMIT_EHT26_H, /* MCS5~9 */
+	PWR_LIMIT_EHT26_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT52_L, /* MCS0~4 */
+	PWR_LIMIT_EHT52_H, /* MCS5~9 */
+	PWR_LIMIT_EHT52_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT106_L, /* MCS0~4 */
+	PWR_LIMIT_EHT106_H, /* MCS5~9 */
+	PWR_LIMIT_EHT106_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT996_L, /* MCS0~4 */
+	PWR_LIMIT_EHT996_H, /* MCS5~9 */
+	PWR_LIMIT_EHT996_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT996X2_L, /* MCS0~4 */
+	PWR_LIMIT_EHT996X2_H, /* MCS5~9 */
+	PWR_LIMIT_EHT996X2_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT26_52_L, /* MCS0~4 */
+	PWR_LIMIT_EHT26_52_H, /* MCS5~9 */
+	PWR_LIMIT_EHT26_52_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT26_106_L, /* MCS0~4 */
+	PWR_LIMIT_EHT26_106_H, /* MCS5~9 */
+	PWR_LIMIT_EHT26_106_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT484_242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT484_242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT484_242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT996_484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT996_484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT996_484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT996_484_242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT996_484_242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT996_484_242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_NUM,
+};
+#define PWR_LIMIT_PARSER_EHT_NUM (PWR_LIMIT_EHT_NUM)
+
+#if (CFG_SUPPORT_WIFI_6G == 1)
+enum ENUM_POWER_LIMIT_EHT_6G {
+	PWR_LIMIT_EHT_6G_26_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_26_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_26_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_52_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_52_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_52_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_106_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_106_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_106_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996X2_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996X2_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996X2_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996X4_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996X4_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996X4_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_26_52_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_26_52_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_26_52_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_26_106_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_26_106_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_26_106_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_484_242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_484_242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_484_242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996_484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996_484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996_484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996_484_242_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996_484_242_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996_484_242_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996X2_484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996X2_484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996X2_484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996X3_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996X3_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996X3_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_996X3_484_L, /* MCS0~4 */
+	PWR_LIMIT_EHT_6G_996X3_484_H, /* MCS5~9 */
+	PWR_LIMIT_EHT_6G_996X3_484_U, /* MCS10~15 */
+
+	PWR_LIMIT_EHT_6G_NUM,
+};
+#define PWR_LIMIT_PARSER_EHT6G_NUM (PWR_LIMIT_EHT_6G_NUM)
+#endif /* CFG_SUPPORT_WIFI_6G */
+#endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
 
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
+
+/*  Migrate ENUM_POWER_ANT_TAG to driver cache dimensions
+ */
+enum ENUM_POWER_CACHE_ANT_TAG {
+	POWER_ANT_CACHE_CHAIN_COMP,
+	POWER_ANT_CACHE_CHAIN_ABS,
+	POWER_ANT_CACHE_TAG_NUM
+};
 
 /* Revise channel power limit by scenario with parameter
  * (WF05G, WF02G4, WF15G, WF12G4)
@@ -820,6 +994,13 @@ enum ENUM_PWR_LMT_CHAIN_ANT {
 	PWR_LMT_CHAIN_ANT_WF2,
 	PWR_LMT_CHAIN_ANT_NUM
 };
+
+/* For CHAIN_COMP/CHAIN_ABS */
+enum ENUM_PWR_LMT_ANT_EXT {
+	PWR_LMT_ANT_EXT_MAIN = 0,
+	PWR_LMT_ANT_EXT_AUX,
+	PWR_LMT_ANT_EXT_NUM,
+};
 #endif
 
 enum ENUM_PWR_LMT_CHAIN_CFG_TYPE {
@@ -833,44 +1014,45 @@ enum ENUM_PWR_LMT_CHAIN_CFG_TYPE {
 struct TX_PWR_CTRL_CHANNEL_SETTING {
 	enum ENUM_TX_POWER_CTRL_CHANNEL_TYPE eChnlType;
 	uint8_t channelParam[2];
-	/******** 2G/5G Legacy *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN op[PWR_LIMIT_DYN_LEGACY_NUM];
-	int8_t i8PwrLimit[PWR_LIMIT_DYN_LEGACY_NUM];
-	/******** 2G/5G HE *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opHE[PWR_LIMIT_DYN_HE_NUM];
-	int8_t i8PwrLimitHE[PWR_LIMIT_DYN_HE_NUM];
+
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN op[PWR_LIMIT_NUM];
+	int8_t i8PwrLimit[PWR_LIMIT_NUM];
+
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opHE[PWR_LIMIT_HE_BW160_NUM];
+	int8_t i8PwrLimitHE[PWR_LIMIT_HE_BW160_NUM];
+
 #if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
-	/******** 2G/5G EHT *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opEHT[PWR_LIMIT_DYN_EHT_NUM];
-	int8_t i8PwrLimitEHT[PWR_LIMIT_DYN_EHT_NUM];
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opEHT[PWR_LIMIT_EHT_NUM];
+	int8_t i8PwrLimitEHT[PWR_LIMIT_EHT_NUM];
 #endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
+
 #if (CFG_SUPPORT_WIFI_6G == 1)
-	/******** 6G Legacy *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN
-		opLegacy_6G[PWR_LIMIT_DYN_LEGACY_6G_NUM];
-	int8_t i8PwrLimitLegacy_6G[PWR_LIMIT_DYN_LEGACY_6G_NUM];
-	/******** 6G HE *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN op6E[PWR_LIMIT_DYN_HE_6G_NUM];
-	int8_t i8PwrLimit6E[PWR_LIMIT_DYN_HE_6G_NUM];
+	/* for RU rate TxPower setting */
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN op6E[PWR_LIMIT_6E_NUM];
+	int8_t i8PwrLimit6E[PWR_LIMIT_6E_NUM];
+	/* for Legacy rate TxPower setting */
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opLegacy_6G[PWR_LIMIT_LEGACY_6G_NUM];
+	int8_t i8PwrLimitLegacy_6G[PWR_LIMIT_LEGACY_6G_NUM];
+
 #if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
-	/******** 6G EHT *********/
-	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opEHT_6G[PWR_LIMIT_DYN_EHT_6G_NUM];
-	int8_t i8PwrLimitEHT_6G[PWR_LIMIT_DYN_EHT_6G_NUM];
+	enum ENUM_TX_POWER_CTRL_VALUE_SIGN opEHT_6G[PWR_LIMIT_EHT_6G_NUM];
+	int8_t i8PwrLimitEHT_6G[PWR_LIMIT_EHT_6G_NUM];
 #endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
 #endif /* CFG_SUPPORT_WIFI_6G */
 };
 
+
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
 struct TX_PWR_CTRL_ANT_SETTING {
-	int8_t aiPwrAnt2G4[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt5GB1[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt5GB2[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt5GB3[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt5GB4[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt6GB1[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt6GB2[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt6GB3[PWR_LMT_CHAIN_ANT_NUM];
-	int8_t aiPwrAnt6GB4[PWR_LMT_CHAIN_ANT_NUM];
+	int8_t aiPwrAnt2G4[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt5GB1[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt5GB2[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt5GB3[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt5GB4[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt6GB1[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt6GB2[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt6GB3[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
+	int8_t aiPwrAnt6GB4[PWR_LMT_CHAIN_ANT_NUM][PWR_LMT_ANT_EXT_NUM];
 };
 #endif
 
@@ -878,7 +1060,7 @@ struct TX_PWR_CTRL_ELEMENT {
 	struct LINK_ENTRY node;
 	u_int8_t fgApplied;
 	char name[MAX_TX_PWR_CTRL_ELEMENT_NAME_SIZE]; /* scenario name */
-	uint8_t index; /* scenario index */
+	uint16_t index; /* scenario index */
 	enum ENUM_TX_POWER_CTRL_TYPE eCtrlType;
 	uint8_t settingCount;
 	/* channel setting count. [.....] means one channel setting */
@@ -886,21 +1068,23 @@ struct TX_PWR_CTRL_ELEMENT {
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
 	struct TX_PWR_CTRL_ANT_SETTING aiPwrAnt[POWER_ANT_TAG_NUM];
 #endif
-#if (CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1)
-	struct TX_PWR_CTRL_MULTIBAND_SETTING
-		rMultiBandCfg[PWR_LIMIT_MULTIBAND_TYPE_NUM];
-#endif /* CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1 */
-	struct TX_PWR_CTRL_CHANNEL_SETTING rChlSettingList[];
+	struct TX_PWR_CTRL_CHANNEL_SETTING rChlSettingList[1];
 	/* always keep it the last one. */
 };
 
 struct PARAM_TX_PWR_CTRL_IOCTL {
 	u_int8_t fgApplied;
 	uint8_t *name;
-	uint8_t index;
+	uint16_t index;
 	uint8_t *newSetting;
 };
 #endif
+
+enum ENUM_TXPWR_CONNECT_SCE {
+	TXPWR_CONNECT_SCE_SINGLE,
+	TXPWR_CONNECT_SCE_DBDC,
+	TXPWR_CONNECT_SCE_NUM
+};
 
 /* Define g_rRlmSubBand index
  * Due to TxPower limit cmd size,
@@ -974,15 +1158,54 @@ enum ENUM_PWR_CFG_RATE_TAG {
 	PWR_CFG_RATE_TAG_HIT_EHT6G = 6,
 #endif
 #endif
+	PWR_CFG_RATE_TAG_HIT_LEGACY_V2 = 7,
+	PWR_CFG_RATE_TAG_HIT_LEGACY6G_V2 = 8,
 	PWR_CFG_RATE_TAG_NUM
 };
 
-enum ENUM_REGULATORY_CATEGORY {
-	REG_CAT_NULL = 0,
-	REG_CAT_FCC = 1,
-	REG_CAT_ETSI = 2,
-	REG_CAT_ARIB = 3,
-	REG_CAT_NUM
+
+enum ENUM_PWR_LIMIT_DEFAULT_BASE {
+	PWR_LIMIT_DEFAULT_BASE_NORMAL,
+#if (CFG_SUPPORT_WIFI_6G == 1)
+	PWR_LIMIT_DEFAULT_BASE_VLP,
+	PWR_LIMIT_DEFAULT_BASE_SP,
+#endif /* CFG_SUPPORT_WIFI_6G == 1 */
+	PWR_LIMIT_DEFAULT_BASE_NUM,
+};
+
+enum ENUM_PWR_LIMIT_CONFIG_BASE_V0 {
+	CFG_V0_LEGACY,
+	CFG_V0_HE,
+	CFG_V0_HE160,
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+	CFG_V0_EHT,
+#endif
+#if (CFG_SUPPORT_WIFI_6G == 1)
+	CFG_V0_LEGACY6G,
+	CFG_V0_HE6G,
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+	CFG_V0_EHT6G,
+#endif
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+	CFG_V0_LEGACY6G_VLP,
+	CFG_V0_HE6G_VLP,
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+	CFG_V0_EHT6G_VLP,
+#endif
+	CFG_V0_LEGACY6G_SP,
+	CFG_V0_HE6G_SP,
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+	CFG_V0_EHT6G_SP,
+#endif
+#endif
+#endif
+	CFG_V0_NUM,
+};
+
+enum ENUM_PWR_LIMIT_DEFINE {
+	PWR_LIMIT_DEFINE_CENTER_CHANNEL,
+	PWR_LIMIT_DEFINE_PRIMARY_CHANNEL,
+	PWR_LIMIT_DEFINE_NUM,
 };
 
 #if 0
@@ -1005,6 +1228,7 @@ struct DOMAIN_SUBBAND_INFO {
 struct DOMAIN_INFO_ENTRY {
 	uint16_t u2CountryCode;
 	uint16_t u2MibRegDomainValue;
+
 	/* If different attributes, put them into different rSubBands.
 	 * For example, DFS shall be used or not.
 	 */
@@ -1042,16 +1266,7 @@ struct DOMAIN_INFO_ENTRY {
 	 * For example, DFS shall be used or not.
 	 */
 	struct DOMAIN_SUBBAND_INFO rSubBand[MAX_SUBBAND_NUM];
-	enum ENUM_REGULATORY_CATEGORY eRegCat;
 };
-
-#if (CFG_SUPPORT_RLM_DOMAIN_LOAD_FILE == 1)
-/* Parse domain_info from outside cfg */
-struct DOMAIN_INFO_CFG_ENTRY {
-	uint16_t u2CountryGroup;
-	struct DOMAIN_SUBBAND_INFO rSubBand[8];
-};
-#endif
 #endif
 
 #if CFG_SUPPORT_PWR_LIMIT_COUNTRY
@@ -1137,6 +1352,98 @@ struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT {
 	/* bit3: cPwrLimitUnii2C; bit4: cPwrLimitUnii3; mW: 0, mW\MHz : 1 */
 	uint8_t ucPwrUnit;
 };
+#define DEFAULT_TBL_SIZE \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT))
+
+struct COUNTRY_POWER_LIMIT_FILE_INFO {
+	const char *pcPwrLimitCfgFile;
+	uint32_t u4Size;
+	uint32_t u4FileSize;
+	bool fgValid;
+	void *pData;
+};
+
+struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT_INFO {
+	struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT *prPwrLmtDefaultTable;
+	uint32_t TableNum;
+};
+
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	/* Note: this array doesn't include cPwrLimitOFDM_L & cPwrLimitOFDM_H */
+	int8_t aucPwrLimit[PWR_LIMIT_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_LEGACY \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION))
+
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_HE_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_HE \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE))
+
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE_BW160 {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_HE_BW160_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_HE160 \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE_BW160))
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_EHT_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_EHT \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT))
+#endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
+
+#if (CFG_SUPPORT_WIFI_6G == 1)
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_6E {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_6E_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_HE6G \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_6E))
+
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_6G {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_LEGACY_6G_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_LEGACY6G \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_6G))
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#pragma pack(push, 1)
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_6G {
+	uint8_t aucCountryCode[2];
+	int16_t i2CentralCh;
+	int8_t aucPwrLimit[PWR_LIMIT_EHT_6G_NUM];
+};
+#pragma pack(pop)
+#define CFG_TBL_V0_SIZE_EHT6G \
+	(sizeof(struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_6G))
+#endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
+#endif /* CFG_SUPPORT_WIFI_6G */
 
 struct SUBBAND_CHANNEL {
 	enum ENUM_BAND eBand;
@@ -1202,47 +1509,6 @@ struct mtk_regd_control {
 	enum ENUM_MBMC_BN eDBDCBand;
 };
 
-#if (CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1)
-#define WLAN_ANT_GAIN_FILE_BUF_SIZE (2048)
-
-#define POWER_LIMIT_G_BAND_CH_GROUP_0_START   1
-#define POWER_LIMIT_G_BAND_CH_GROUP_0_END    14
-
-#define POWER_LIMIT_A_BAND_CH_GROUP_1_START  36
-#define POWER_LIMIT_A_BAND_CH_GROUP_1_END    50
-#define POWER_LIMIT_A_BAND_CH_GROUP_2_START  52
-#define POWER_LIMIT_A_BAND_CH_GROUP_2_END    64
-#define POWER_LIMIT_A_BAND_CH_GROUP_3_START 100
-#define POWER_LIMIT_A_BAND_CH_GROUP_3_END   144
-#define POWER_LIMIT_A_BAND_CH_GROUP_4_START 149
-#define POWER_LIMIT_A_BAND_CH_GROUP_4_END   181
-
-#if (CFG_SUPPORT_WIFI_6G == 1)
-#define POWER_LIMIT_6G_BAND_CH_GROUP_1_START   1
-#define POWER_LIMIT_6G_BAND_CH_GROUP_1_END    29
-#define POWER_LIMIT_6G_BAND_CH_GROUP_2_START  33
-#define POWER_LIMIT_6G_BAND_CH_GROUP_2_END    61
-#define POWER_LIMIT_6G_BAND_CH_GROUP_3_START  65
-#define POWER_LIMIT_6G_BAND_CH_GROUP_3_END    95
-#define POWER_LIMIT_6G_BAND_CH_GROUP_4_START  97
-#define POWER_LIMIT_6G_BAND_CH_GROUP_4_END   113
-#define POWER_LIMIT_6G_BAND_CH_GROUP_5_START 117
-#define POWER_LIMIT_6G_BAND_CH_GROUP_5_END   185
-#define POWER_LIMIT_6G_BAND_CH_GROUP_6_START 189
-#define POWER_LIMIT_6G_BAND_CH_GROUP_6_END   233
-#endif /* (CFG_SUPPORT_WIFI_6G == 1) */
-
-enum ENUM_POWER_ANT_GAIN_GROUP {
-	POWER_ANT_GAIN_GROUP_1 = 0,
-	POWER_ANT_GAIN_GROUP_2,
-	POWER_ANT_GAIN_GROUP_3,
-	POWER_ANT_GAIN_GROUP_4,
-	POWER_ANT_GAIN_GROUP_5,
-	POWER_ANT_GAIN_GROUP_6,
-	POWER_ANT_GAIN_GROUP_NUM
-};
-#endif /*CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1*/
-
 #if (CFG_SUPPORT_SINGLE_SKU_LOCAL_DB == 1)
 struct mtk_regdomain {
 	char country_code[4];
@@ -1268,19 +1534,18 @@ struct  PWR_MODE_6G_SUBAND_SUPPROT {
 
 struct COUNTRY_PWR_MODE_6G_SUPPORT_TABLE {
 	uint8_t aucCountryCode[2];
+	struct PWR_MODE_6G_SUBAND_SUPPROT rCh2Support;
 	struct PWR_MODE_6G_SUBAND_SUPPROT rSubBand[SUBBAND_6G_NUM];
 };
-
-#if (CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1)
-enum ENUM_PWR_REG_6G_BIT {
-	PWR_REG_6G_TPC = 0,   /* Enable TPC algo in firmware */
-	PWR_REG_6G_VLP = 1,   /* Bss need to use VLP pwr mode */
-	PWR_REG_6G_NUM        /* Number should not be greater than 8 */
-};
-#endif /* CFG_SUPPORT_CE_6G_PWR_REGULATIONS */
 #endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
 
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
+struct TX_PWR_ANT_EXT_OPTION {
+	const char arKeywords[32];
+	enum ENUM_PWR_LMT_ANT_EXT eAntExt;
+	uint8_t u4OptionBit;
+};
+
 struct TX_PWR_ANT_CFG_PARA_TABLE {
 	const char arKeywords[32];
 	uint8_t ucSettingNum;
@@ -1289,84 +1554,61 @@ struct TX_PWR_ANT_CFG_PARA_TABLE {
 };
 #endif /* CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG */
 
-struct PWR_LIMIT_INFO {
-	enum ENUM_PWR_LIMIT_TYPE eLimitType;
-	uint8_t ucVersion;
-	enum ENUM_PWR_LMT_SUBBAND eStartSubBand;
-	enum ENUM_PWR_LMT_SUBBAND eEndSubBand;
+
+#if (CFG_TC10_FEATURE == 1)
+struct SAR_SUB_IDX_REMAP_TBL_INFO {
+	uint16_t u2SubIdx;
+	uint32_t u4BitMap;
+};
+enum ENUM_SAR_TYPE {
+	SAR_HEAD = 0,
+	SAR_BODY,   /* GRIP */
+	SAR_NR_MMWAVE,
+	SAR_NR_SUB6,
+	SAR_MHS,
+	SAR_NR_SUB6_BAND_INFO_2,
+	SAR_NR_SUB6_BAND_INFO_7,
+	SAR_NR_SUB6_BAND_INFO_25,
+	SAR_NR_SUB6_BAND_INFO_38,
+	SAR_NR_SUB6_BAND_INFO_40,
+	SAR_NR_SUB6_BAND_INFO_41,
+	SAR_NR_SUB6_BAND_INFO_48,
+	SAR_NR_SUB6_BAND_INFO_66,
+	SAR_NR_SUB6_BAND_INFO_77,
+	SAR_NR_SUB6_BAND_INFO_78,
+	SAR_NUM
 };
 
-#if (CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1)
-struct MULTIBAND_PWR_LIMIT_INFO {
-	uint8_t ucVersion;
-	uint32_t u4ChCnt;
-	enum ENUM_PWR_LMT_SUBBAND eStartSubBand;
-	enum ENUM_PWR_LMT_SUBBAND eEndSubBand;
-};
-#endif /* CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1 */
-
-#if (CFG_SUPPORT_PWR_LMT_EMI == 1)
-struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT_INFO {
-	struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT *prPwrLmtDefaultTable;
-	uint32_t TableNum;
-};
-
-struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_INFO {
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY *table;
-	uint32_t table_num;
+enum ENUM_SAR_EVENT_ID {
+	HEAD_SAR_BACKOFF_DISABLED = -1,
+	HEAD_SAR_BACKOFF_ENABLED = 0,
+	BODY_SAR_BACKOFF_DISABLED = 1,
+	BODY_SAR_BACKOFF_ENABLED = 2,
+	NR_MMWAVE_SAR_BACKOFF_DISABLED = 3,
+	NR_MMWAVE_SAR_BACKOFF_ENABLED = 4,
+	NR_SUB6_SAR_BACKOFF_DISABLED = 5,
+	NR_SUB6_SAR_BACKOFF_ENABLED = 6,
+	SAR_SAR_BACKOFF_DISABLE_ALL = 7,
+	MHS_SAR_BACKOFF_DISABLED = 8,
+	MHS_SAR_BACKOFF_ENABLED = 9,
+	SAR_EVENT_NUM,
+	SAR_EVENT_NOT_DEFINE = SAR_EVENT_NUM
 };
 
-struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE_INFO {
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE *table;
-	uint32_t table_num;
+enum ENUM_SAR_CMD_TYPE {
+	SAR_TX_POWER_CALLING = 0,
+	SAR_TX_POWER_SUB6_BAND,
+	SAR_CMD_TYPE_NUM
 };
 
-struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_INFO {
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT *table;
-	uint32_t table_num;
+enum ENUM_SAR_APPLY_ANT {
+	SAR_APPLY_ANT_DISABLE = 0,
+	SAR_APPLY_ANT_ALL = 1,
+	SAR_APPLY_ANT_WF0 = 2,
+	SAR_APPLY_ANT_WF1 = 3,
+	SAR_APPLY_ANT_NUM
 };
-
-struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_INFO {
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_INFO Legacy;
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE_INFO HE;
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_INFO EHT;
-};
-
-typedef void (*PFN_PWR_LMT_DEFAULT_PAYLOAD_FUNC) (
-	struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT *prPwrLimitSubBand,
-	struct SET_COUNTRY_CHANNEL_POWER_LIMIT *prPerPwrLimit,
-	struct PWR_LIMIT_INFO rPerPwrLimitInfo);
-
-typedef void (*PFN_PWR_LMT_CONFIG_PAYLOAD_FUNC) (
-	struct ADAPTER *prAdapter,
-	struct SET_COUNTRY_CHANNEL_POWER_LIMIT *prPerPwrLimit,
-	enum ENUM_PWR_LIMIT_RF_BAND eRFBandIndex);
-
-typedef void (*PFN_PWR_LMT_DUMP_PAYLOAD_FUNC) (
-	char *message,
-	struct SET_COUNTRY_CHANNEL_POWER_LIMIT *prPerPwrLimit,
-	enum ENUM_PWR_LIMIT_RF_BAND eRFBandIndex);
-
-typedef void (*PFN_PWR_LMT_APPLY_DYN_SETTING_FUNC) (
-	struct SET_COUNTRY_CHANNEL_POWER_LIMIT *prPerPwrLimit,
-	struct TX_PWR_CTRL_ELEMENT *element,
-	uint8_t *bandedgeParam,
-	enum ENUM_PWR_LIMIT_RF_BAND eRFBandIndex);
-
-typedef void (*PFN_PWR_LMT_WRITE_EMI_FUNC) (
-	uint32_t channel_index,
-	struct SET_COUNTRY_CHANNEL_POWER_LIMIT *prPerPwrLimit,
-	char *prTxPowrEmiAddress,
-	uint32_t *size);
-
-struct PWR_LIMIT_HANDLER_INFO {
-	PFN_PWR_LMT_DEFAULT_PAYLOAD_FUNC pfLoadDefTbl;
-	PFN_PWR_LMT_CONFIG_PAYLOAD_FUNC pfLoadCfgTbl;
-	PFN_PWR_LMT_DUMP_PAYLOAD_FUNC pfDumpData;
-	PFN_PWR_LMT_APPLY_DYN_SETTING_FUNC pfApplyDynSet;
-	PFN_PWR_LMT_WRITE_EMI_FUNC pfWriteEmi;
-};
-#endif /* CFG_SUPPORT_PWR_LMT_EMI == 1 */
+#endif /* CFG_TC10_FEATURE */
 /*******************************************************************************
  * P U B L I C   D A T A
  *******************************************************************************
@@ -1439,19 +1681,16 @@ u_int8_t rlmDomainIsValidRfSetting(struct ADAPTER *prAdapter,
 
 u_int8_t
 rlmDomainCheckPowerLimitValid(struct ADAPTER *prAdapter,
-#if (CFG_SUPPORT_PWR_LMT_EMI == 1)
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY
-#else
-	struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION
-#endif /* CFG_SUPPORT_PWR_LMT_EMI == 1 */
-		rPowerLimitTableConfiguration,
-	uint8_t ucPwrLimitNum);
+			      struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION
+			      rPowerLimitTableConfiguration,
+			      uint8_t ucPwrLimitNum);
 
 void rlmDomainCheckCountryPowerLimitTable(
 	struct ADAPTER *prAdapter);
 
 uint16_t rlmDomainPwrLimitDefaultTableDecision(
-	struct ADAPTER *prAdapter, uint16_t u2CountryCode);
+	struct ADAPTER *prAdapter, uint16_t u2CountryCode,
+	enum ENUM_PWR_LIMIT_DEFAULT_BASE eDefBase);
 
 void rlmDomainSendPwrLimitCmd(struct ADAPTER *prAdapter);
 #endif
@@ -1498,33 +1737,30 @@ u_int8_t rlmDomainIsLegalChannel(struct ADAPTER *prAdapter,
 
 u_int8_t rlmDomainIsIndoorChannel(struct ADAPTER *prAdapter,
 				 enum ENUM_BAND eBand, uint8_t ucChannel);
-#if (CFG_CH_SELECT_ENHANCEMENT == 1)
+
 u_int8_t rlmDomainIsStaSapIndoorConn(struct ADAPTER *prAdapter);
-#endif
 u_int8_t rlmDomainIsLegalDfsChannel(struct ADAPTER *prAdapter,
 		enum ENUM_BAND eBand, uint8_t ucChannel);
 enum ENUM_CHNL_EXT rlmSelectSecondaryChannelType(
 	struct ADAPTER *prAdapter, enum ENUM_BAND band,
 	u8 primary_ch);
 void rlmDomainOidSetCountry(struct ADAPTER *prAdapter,
-	char *country, uint8_t size_of_country, uint8_t fgNeedHoldRtnlLock);
+			    char *country, u8 size_of_country);
 u32 rlmDomainGetCountryCode(void);
 void rlmDomainAssert(u_int8_t cond);
 void rlmDomainU32ToAlpha(uint32_t u4CountryCode, char *pcAlpha);
 uint32_t rlmDomainAlpha2ToU32(char *pcAlpha2, uint8_t ucAlpha2Size);
-uint16_t rlmDomainReverseAlpha2(uint16_t Alpha2);
 uint8_t rlmDomainCountryCodeUpdateSanity(
 	struct GLUE_INFO *prGlueInfo,
 	struct ADAPTER **prAdapter);
 
 void rlmDomainCountryCodeUpdate(struct ADAPTER *prAdapter,
-		uint32_t u4CountryCode, uint8_t fgNeedHoldRtnlLock);
-void rlmDomainSetCountry(struct ADAPTER *prAdapter,
-	uint8_t fgNeedHoldRtnlLock);
+		uint32_t u4CountryCode);
+void rlmDomainSetCountry(struct ADAPTER *prAdapter);
 
 uint32_t
 rlmDomainUpdateRegdomainFromaLocalDataBaseByCountryCode(
-	uint32_t u4CountryCode, uint8_t fgNeedHoldRtnlLock);
+	uint32_t u4CountryCode);
 
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT
 /* dynamic tx power control */
@@ -1547,22 +1783,10 @@ struct TX_PWR_CTRL_ELEMENT *txPwrCtrlFindElement(
 				enum ENUM_TX_POWER_CTRL_LIST_TYPE eListType);
 void txPwrCtrlAddElement(struct ADAPTER *prAdapter,
 				struct TX_PWR_CTRL_ELEMENT *prElement);
-
+char *txPwrGetString(char **pcContent, char *delim);
+uint32_t txPwrParseNumber(char **pcContent, char *delim,
+				uint8_t *op, uint16_t *value);
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
-int32_t txPwrParseTagMimo1T(
-	char *pStart, char *pEnd, uint8_t cTagParaNum,
-	struct TX_PWR_CTRL_ELEMENT *pRecord);
-int32_t txPwrParseTagMimo2T(
-	char *pStart, char *pEnd, uint8_t cTagParaNum,
-	struct TX_PWR_CTRL_ELEMENT *pRecord);
-int32_t txPwrParseTagAllT(
-	char *pStart, char *pEnd, uint8_t cTagParaNum,
-	struct TX_PWR_CTRL_ELEMENT *pRecord);
-
-int32_t txPwrParseTagAllT6G(
-	char *pStart, char *pEnd, uint8_t cTagParaNum,
-	struct TX_PWR_CTRL_ELEMENT *pRecord);
-
 int32_t txPwrParseTagChainComp(
 	char *pStart, char *pEnd, uint8_t cTagParaNum,
 	struct TX_PWR_CTRL_ELEMENT *pRecord);
@@ -1570,66 +1794,25 @@ int32_t txPwrParseTagChainComp(
 int32_t txPwrParseTagChainAbs(
 	char *pStart, char *pEnd, uint8_t cTagParaNum,
 	struct TX_PWR_CTRL_ELEMENT *pRecord);
-#endif
 
-#if (CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1)
-int32_t txPwrParseTagMultiBand(
-	char *pcStart, char *pcEnd, uint8_t cTagParaNum,
-	struct TX_PWR_CTRL_ELEMENT *pRecord);
-#endif /* CFG_SUPPORT_MULTIBAND_PWR_LMT_EMI == 1 */
+#endif /*CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG*/
+void txPwrBssUpdateNotify(
+	struct ADAPTER *prAdapter);
 
-#endif
+void txPwrLmitBandModeSwitch(
+	struct ADAPTER *prAdapter,
+	enum ENUM_TXPWR_CONNECT_SCE eNextState);
+
+struct TX_PWR_CTRL_ELEMENT *txpwrSetDynPwrLmtFromOid(
+	struct ADAPTER *prAdapter,
+	struct PARAM_TX_PWR_CTRL_IOCTL *prPwrCtrlParam);
+
+void txPwrLmitSetBandMode(enum ENUM_TXPWR_CONNECT_SCE state);
+enum ENUM_TXPWR_CONNECT_SCE txPwrLmitGetBandMode(void);
+
+#endif /*CFG_SUPPORT_DYNAMIC_PWR_LIMIT*/
 
 #if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
-#if (CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1)
-/*----------------------------------------------------------------------------*/
-/*!
- * \brief This func is use to get 6G power mode, default use LPI
- *
- * \param[in] prAdapter
- *
- * \return value : 6G power mode
- */
-/*----------------------------------------------------------------------------*/
-static uint8_t rlmDomainGetCurr6GPwrMode(
-	struct ADAPTER *prAdapter);
-/*----------------------------------------------------------------------------*/
-/*!
- * \brief This func is used to check whether the Config and TxPwrLimit file
- *       support the current 6G power mode or not.
- *
- * \param[in] prAdapter
- * \param[in] e6GPwrMode : Enum of 6G Power mode
- * \param[in] pfgSupport : Pointer of flag to indicate the support or not
- *
- * \return value : Enum of supported 6G Power mode
- */
-/*----------------------------------------------------------------------------*/
-uint8_t rlmDomain6GPwrModeCfgSupportChk(
-	struct ADAPTER *prAdapter,
-	enum ENUM_PWR_MODE_6G_TYPE e6GPwrMode,
-	uint8_t *pfgSupport);
-/*----------------------------------------------------------------------------*/
-/*!
- * \brief This func is used to check whether the Config, TxPwrLimit file
- *       and Country support the current 6G power mode or not.
- *
- * \param[in] prAdapter
- * \param[in] e6GPwrMode : Enum of 6G Power mode
- * \param[in] pe6GPwrModeFinal : Enum of 6G Power mode
- * \param[in] eBand : RF Band index
- * \param[in] ucChnlNum : Center Channel
- *
- * \return 6G power mode support status
- */
-/*----------------------------------------------------------------------------*/
-u_int8_t rlmDomain6GPwrModeSupportChk(
-	struct ADAPTER *prAdapter,
-	enum ENUM_PWR_MODE_6G_TYPE e6GPwrMode,
-	enum ENUM_PWR_MODE_6G_TYPE *pe6GPwrModeFinal,
-	enum ENUM_BAND eBand,
-	uint8_t ucChnlNum);
-#endif /* CFG_SUPPORT_CE_6G_PWR_REGULATIONS */
 /*----------------------------------------------------------------------------*/
 /*!
  * \brief This func is use to update 6G power mode, when the power mode have
@@ -1706,27 +1889,270 @@ uint32_t rlmDomain6GPwrModeSubbandChk(
 	uint8_t *pfgSupport);
 #endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
 
-#if (CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1)
-uint32_t rlmDomainUpdatePwrLimit_6G_By_PowerMode(struct ADAPTER *prAdapter,
-	enum ENUM_PWR_MODE_6G_TYPE ePwrMode6G);
-bool rlmDomainAntGainInit(
-	struct ADAPTER *prAdapter);
-uint32_t rlmDomainAntGainGetGroupGain(
-	uint8_t ucPriCh,
-	enum ENUM_BAND eBand,
-	int8_t *acAntGain);
-void rlmSendTpeLimit(
-	struct ADAPTER *prAdapter,
-	enum ENUM_BAND eBand,
-	uint8_t ucPriCh,
-	uint8_t ucPwrLmtNum,
-	int8_t *pcTxPwrEnvMaxPwr,
-	uint8_t fgPwrLmtEnable);
-#endif  /*CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1*/
+#if (CFG_TC10_FEATURE == 1)
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is gen SAR bitmap
+ *
+ * @param[in] eType : SAR cmd type
+ * @param[in] eId : Event ID
+ * @param[in] ucInfo : other info
+ *
+ * @return void
+ */
+/*----------------------------------------------------------------------------*/
+void rlmDomainGenSarBitMap(
+	enum ENUM_SAR_CMD_TYPE eType,
+	enum ENUM_SAR_EVENT_ID eId,
+	uint8_t ucInfo);
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is use get SAR action bitmap
+ *
+ * @param[in] void
+ *
+ * @return uint32_t : SAR action bitmap
+ */
+/*----------------------------------------------------------------------------*/
+uint32_t rlmDomainGetSarActBitMap(void);
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is use get SAR scenario name
+ *
+ * @param[in] eType : SAR scenario type
+ *
+ * @return char * : SAR scenario name
+ */
+/*----------------------------------------------------------------------------*/
+char *rlmDomainGetSarScenarioName(enum ENUM_SAR_TYPE eType);
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is use get SAR remapping sub-index
+ *
+ * @param[in] u4BitMap : Bit Map
+ * @param[in] pu4SubIdx : pointer of sub-index
+ *
+ * @return WLAN_STAUS
+ */
+/*----------------------------------------------------------------------------*/
+int32_t rlmDomainSarGetRemapSubIdx(
+		uint32_t u4BitMap,
+		uint16_t *pu2SubIdx);
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is use check is SAR event concurrent
+ *
+ * @param[in] void
+ *
+ * @return uint8_t : TRUE : conncurrent, FALSE : no concurrent
+ */
+/*----------------------------------------------------------------------------*/
+uint8_t rlmDomainIsSarEventConcurrent(void);
+/*----------------------------------------------------------------------------*/
+/*!
+ * @brief This function is get each SAR scenario type apply antenna status
+ *
+ * @param[in] eType : SAR scenario type
+ *
+ * @return apply antenna status
+ */
+/*----------------------------------------------------------------------------*/
+uint32_t rlmDomainGetSarApplyAntStatus(
+	enum ENUM_SAR_TYPE eType);
+#endif /* CFG_TC10_FEATURE */
+
 /*******************************************************************************
  *   F U N C T I O N S
  *******************************************************************************
  */
 
 uint8_t regCountryDfsMapping(struct ADAPTER *prAdapter);
+/*******************************************************************************
+ *                                 M A C R O S
+ *******************************************************************************
+ */
+#define PWR_LMT_TBL_REG(table)	{(table), (ARRAY_SIZE((table)))}
+
+#define PWR_LIMIT_COUNTRY_DEF_TBL_SET(base, pData, num) \
+{ \
+	g_rlmPowerLimitDefaultTable[base].prPwrLmtDefaultTable = \
+		(struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT *)pData; \
+	g_rlmPowerLimitDefaultTable[base].TableNum = num; \
+}
+
+#define PWR_LIMIT_COUNTRY_DEF_TBL_ALL(base) \
+	(g_rlmPowerLimitDefaultTable[base].prPwrLmtDefaultTable)
+
+#define PWR_LIMIT_COUNTRY_DEF_TBL_ALL_NUM(base) \
+	(g_rlmPowerLimitDefaultTable[base].TableNum)
+
+#define PWR_LIMIT_COUNTRY_DEF_TBL(base, tbl_idx) \
+	(&g_rlmPowerLimitDefaultTable[base].prPwrLmtDefaultTable[(tbl_idx)])
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY].pData : \
+		g_rRlmPowerLimitConfiguration)
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_LEGACY].u4Size : \
+		sizeof(g_rRlmPowerLimitConfiguration) / \
+			CFG_TBL_V0_SIZE_LEGACY)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE].pData : \
+		g_rRlmPowerLimitConfigurationHE)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_HE].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationHE) / \
+			CFG_TBL_V0_SIZE_HE)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE160_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE160].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE160].pData : \
+		g_rRlmPowerLimitConfigurationHEBW160)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE160_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE160].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE160].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_HE160].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationHEBW160) / \
+			CFG_TBL_V0_SIZE_HE160)
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT].pData : \
+		g_rRlmPowerLimitConfigurationEHT)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_EHT].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationEHT) / \
+			CFG_TBL_V0_SIZE_EHT)
+#endif
+
+#if (CFG_SUPPORT_WIFI_6G == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G].pData : \
+		g_rRlmPowerLimitConfigurationLegacy6G)
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationLegacy6G) / \
+			CFG_TBL_V0_SIZE_LEGACY6G)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G].pData : \
+		g_rRlmPowerLimitConfiguration6E)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_HE6G].u4Size : \
+		sizeof(g_rRlmPowerLimitConfiguration6E) / \
+			CFG_TBL_V0_SIZE_HE6G)
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G].pData : \
+		g_rRlmPowerLimitConfigurationEHT_6G)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_EHT6G].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationEHT_6G) / \
+			CFG_TBL_V0_SIZE_EHT6G)
+#endif
+
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_VLP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_VLP].pData : \
+		g_rRlmPowerLimitConfigurationLegacy6G_VLP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_VLP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_VLP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_VLP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationLegacy6G_VLP) / \
+			CFG_TBL_V0_SIZE_LEGACY6G)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_VLP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G_VLP].pData : \
+		g_rRlmPowerLimitConfiguration6E_VLP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_VLP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G_VLP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_HE6G_VLP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfiguration6E_VLP) / \
+			CFG_TBL_V0_SIZE_HE6G)
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_VLP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G_VLP].pData : \
+		g_rRlmPowerLimitConfigurationEHT_6G_VLP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_VLP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G_VLP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G_VLP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_EHT6G_VLP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationEHT_6G_VLP) / \
+			CFG_TBL_V0_SIZE_EHT6G)
+#endif
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_SP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_SP].pData : \
+		g_rRlmPowerLimitConfigurationLegacy6G_SP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_LEGACY6G_SP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_SP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_LEGACY6G_SP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationLegacy6G_SP) / \
+			CFG_TBL_V0_SIZE_LEGACY6G)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_SP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G_SP].pData : \
+		g_rRlmPowerLimitConfiguration6E_SP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_HE6G_SP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_HE6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_HE6G_SP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_HE6G_SP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfiguration6E_SP) / \
+			CFG_TBL_V0_SIZE_HE6G)
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_SP_GET_DATA() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G_SP].pData : \
+		g_rRlmPowerLimitConfigurationEHT_6G_SP)
+
+#define PWR_LIMIT_COUNTRT_CFG_V0_EHT6G_SP_GET_SIZE() \
+	((g_arPwrLimitCfgV0File[CFG_V0_EHT6G_SP].fgValid) ? \
+		g_arPwrLimitCfgV0File[CFG_V0_EHT6G_SP].u4FileSize / \
+			g_arPwrLimitCfgV0File[CFG_V0_EHT6G_SP].u4Size : \
+		sizeof(g_rRlmPowerLimitConfigurationEHT_6G_SP) / \
+			CFG_TBL_V0_SIZE_EHT6G)
+
+#endif /* (CFG_SUPPORT_PWR_LIMIT_EHT == 1) */
+#endif /* (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1) */
+#endif /* (CFG_SUPPORT_WIFI_6G == 1)*/
 #endif /* _RLM_DOMAIN_H */

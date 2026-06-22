@@ -3710,8 +3710,10 @@ static int rpmb_iwsock_thread(void *context)
 		retry_cnt = 0;
 retry:
 		mmc = mtk_mmc_host[0];
+		/*A14_V&A06_V code for P260207-00838  by zhengchao at 20260210 start*/
 		if (mmc && mmc->card && dev_get_drvdata(&mmc->card->dev))
 			rpmb_iwsock_execute_emmc(ctx);
+		/*A14_V&A06_V code for P260207-00838  by zhengchao at 20260210 end*/
 #endif
 #if IS_ENABLED(CONFIG_DEVICE_MODULES_MMC_MTK_PRO) && IS_ENABLED(CONFIG_DEVICE_MODULES_SCSI_UFS_MEDIATEK)
 		else

@@ -135,8 +135,10 @@
 		tcpc-dual,supported_modes = <0>; /* 0: dfp/ufp, */
 						 /* 1: dfp, 2: ufp */
 		et-tcpc,name = "type_c_port0"; /* tcpc_device's name */
-		et-tcpc,role_def = <4>; /* 0: SNK Only, 1: SRC Only, 2: DRP, */
-					/* 3: Try.SRC, 4: Try.SNK */
+		/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 start*/
+		et-tcpc,role_def = <5>; /* 1: SNK Only, 2: SRC Only, 3: DRP, */
+					/* 4: Try.SRC, 5: Try.SNK */
+		/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 end*/
 		et-tcpc,rp_level = <0>; /* 0: Default, 1: 1.5, 2: 3.0 */
 		et-tcpc,vconn_supply  = <1>;  /* 0: Never, 1: Always, */
 					      /* 2: EMarkOnly, 3: StartOnly */

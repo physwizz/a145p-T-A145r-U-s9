@@ -1359,7 +1359,8 @@
  * Driver supports usable channel
  *------------------------------------------------------------------------------
  */
-#define CFG_SUPPORT_USABLE_CHANNEL 0//(CFG_EXT_FEATURE && CFG_SUPPORT_CONNAC3X)
+#define CFG_SUPPORT_USABLE_CHANNEL	0
+
 /*------------------------------------------------------------------------------
  * Flags of Network Controlled HandOver(NCHO) support
  * TC10 only: To improve the voice quality during handover,

@@ -35,6 +35,7 @@ const struct feature_match_entry feature_match[] = {
 	{"feature_immutable_dst_exception", feature_immutable_dst_exception},
 	{"feature_umhbin_path", feature_umhbin_path},
 	{"feature_integrity_check", feature_integrity_check},
+	{"feature_immutable_tgt_exception", feature_immutable_tgt_exception},
 };
 
 struct file_list_item {

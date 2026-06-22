@@ -55,8 +55,6 @@
 #define MGT_BUFFER_SIZE		(MAX_NUM_OF_BUF_BLOCKS * MGT_BUF_BLOCK_SIZE)
 #define MSG_BUFFER_SIZE		(MAX_NUM_OF_BUF_BLOCKS * MSG_BUF_BLOCK_SIZE)
 
-#define ANY_BSS_INDEX			0xFF
-
 /* STA_REC related definitions */
 #define STA_REC_INDEX_BMCAST		0xFF
 #define STA_REC_INDEX_NOT_FOUND		0xFE
@@ -187,7 +185,6 @@ struct AP_PMF_CFG {
 	u_int8_t fgMfpr;
 	u_int8_t fgSha256;
 	u_int8_t fgAPApplyPmfReq;
-	u_int8_t fgBipKeyInstalled;
 };
 
 struct STA_PMF_CFG {
@@ -258,14 +255,11 @@ struct STA_RECORD {
 	/* Indicate the role of this STA in the network (for example, P2P GO) */
 	enum ENUM_STA_TYPE eStaType;
 
-	/* Indicate if it's a RTT network */
-	enum ENUM_STA_SUBTYPE eStaSubtype;
-
 	uint8_t ucBssIndex;	/* BSS_INFO_I index */
-	uint8_t ucLinkId;
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
 	uint8_t ucMldStaIndex;	/* MLD_STAREC index */
+	uint8_t ucLinkIndex;
 	/*
 	 * the tid-to-link bitmap,  BIT0 for TID0, BIT1 for TID1...
 	 *     1'b1: supoort transmission for the TID in this link
@@ -565,9 +559,6 @@ struct STA_RECORD {
 	uint8_t *pucAssocReqIe;
 	uint16_t u2AssocReqIeLen;
 
-	uint8_t *pucAssocRespIe;
-	uint16_t u2AssocRespIeLen;
-
 	/* link layer satatistics */
 	struct WIFI_WMM_AC_STAT arLinkStatistics[WMM_AC_INDEX_NUM];
 
@@ -654,7 +645,7 @@ struct STA_RECORD {
 	uint64_t u8TotalRxPkts;
 	uint64_t u8GetDataRateTime;
 #endif
-	/* When this STA_REC called qmActivateStaRec, set to TRUE. */
+	/* When this STA_REC is in use, set to TRUE. */
 	u_int8_t fgIsValid;
 
 	/* TX key is ready */
@@ -683,9 +674,6 @@ struct STA_RECORD {
 	/* Reorder Parameter reference table */
 	struct RX_BA_ENTRY *aprRxReorderParamRefTbl[CFG_RX_MAX_BA_TID_NUM];
 
-	/* Support change QM RX BA entry miss timeout (unit: ms) dynamically */
-	uint32_t u4QmRxBaMissTimeout;
-
 #if CFG_SUPPORT_802_11V_TIMING_MEASUREMENT
 	struct TIMINGMSMT_PARAM rWNMTimingMsmt;
 #endif
@@ -704,8 +692,8 @@ struct STA_RECORD {
 	uint16_t u2MaxLinkSpeed;	/* unit is 0.5 Mbps */
 	uint16_t u2MinLinkSpeed;
 	uint32_t u4Flags;	/* reserved for MTK Synergies */
-#if CFG_SUPPORT_RXSMM_ALLOWLIST
-	u_int8_t fgRxsmmEnable;	/* AllowList for RxSMM enable */
+#if CFG_SUPPORT_RXSMM_WHITELIST
+	u_int8_t fgRxsmmEnable;	/* WhiteList for RxSMM enable */
 #endif
 
 #if CFG_SUPPORT_TDLS
@@ -762,12 +750,6 @@ struct STA_RECORD {
 	/* TWT Requester state */
 	enum _ENUM_TWT_REQUESTER_STATE_T aeTWTReqState;
 	struct _TWT_FLOW_T arTWTFlow[TWT_MAX_FLOW_NUM];
-#if (CFG_SUPPORT_BTWT == 1)
-	struct _TWT_FLOW_T arBTWTFlow[RTWT_MAX_FLOW_NUM];
-#endif
-#if (CFG_SUPPORT_RTWT == 1)
-	struct _TWT_FLOW_T arRTWTFlow[RTWT_MAX_FLOW_NUM];
-#endif
 
 #if (CFG_SUPPORT_TWT_HOTSPOT == 1)
 	u_int8_t ucTWTHospotSupport;
@@ -775,17 +757,10 @@ struct STA_RECORD {
 	struct _TWT_HOTSPOT_CTRL_T TWTHotspotCtrl;
 	struct _TWT_HOTSPOT_STA_NODE *prTWTHotspotStaNode;
 #endif
+#endif
 
-#if (CFG_SUPPORT_TWT_STA_CNM == 1)
-	/* Get current TSF timer */
-	struct TIMER rTwtGetCurrentTsfTimeoutTimer;
-	/* FSM Wait Resp Timer */
-	struct TIMER rTwtFsmWaitRespTimeoutTimer;
-	/* FSM Teardown Timer */
-	struct TIMER rTwtFsmTeardownTimeoutTimer;
-#endif
-#endif
 	uint32_t au4Timestamp[2];
+
 #if (CFG_SUPPORT_802_11AX == 1)
 	struct HE_A_CTRL_OM_T arHeACtrlOm;
 #endif
@@ -798,10 +773,6 @@ struct STA_RECORD {
 	u_int8_t fgSupportDMS;
 	u_int8_t ucSupportedBand;
 #endif
-	uint32_t u4SupportedOpClassBits;
-	uint16_t u2SupportedChnlBits_2g;
-	uint32_t u4SupportedChnlBits_5g_0;
-	uint16_t u2SupportedChnlBits_5g_1;
 
 	/*
 	 * Flag used to record the connected status of upper layer.
@@ -862,6 +833,7 @@ struct STA_RECORD {
 
 #if CFG_SUPPORT_MLR
 	/* Peer MLR capability */
+	u_int8_t fgIsMlrSupported;
 	uint8_t ucMlrSupportBitmap;
 	/* Peer MLR status */
 	uint8_t ucMlrMode;
@@ -871,11 +843,10 @@ struct STA_RECORD {
 	u_int8_t fgIsMscsSupported;
 	struct LINK rMscsMonitorList;
 	struct LINK rMscsTcpMonitorList;
+	u_int8_t ucGcCsaSupported;
 	u_int8_t fgIsEapEncrypt;
 
 	u_int8_t fgEcsaCapable;
-
-	u_int8_t fgIsPeerWithMtkOui;
 };
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
@@ -897,8 +868,8 @@ struct MLD_STA_RECORD {
 	uint8_t ucMaxSimuLinks;
 	struct LINK rStarecList;
 	uint64_t aucRxPktCnt[ENUM_BAND_NUM];
-	unsigned long long u8StaBitmap;
-	unsigned long long u8ActiveStaBitmap;
+	uint32_t u4StaBitmap;
+	uint32_t u4ActiveStaBitmap;
 #if (CFG_SINGLE_BAND_MLSR_56 == 1)
 	uint8_t fgIsSbMlsr; /* single band MLSR 5+6 */
 #endif /* CFG_SINGLE_BAND_MLSR_56 */
@@ -906,9 +877,7 @@ struct MLD_STA_RECORD {
 	struct TIMER rEpcsTimer;
 #if (CFG_SUPPORT_802_11BE_T2LM == 1)
 	enum ENUM_T2LM_STATE eT2LMState;
-	enum ENUM_T2LM_STATE eT2LMNextState;
 	struct TIMER rT2LMTimer;
-	struct TIMER rT2LMFsmTimer;
 	struct T2LM_INFO rT2LMParams;
 #endif
 };
@@ -1095,14 +1064,6 @@ struct MEM_TRACK {
 	uint8_t aucData[];
 };
 #endif
-
-#ifdef UEFI
-struct UEFI_CNM_MEM_SIZE_HEADER {
-	uint32_t u4AllocatedSize;
-	uint8_t aucData[];
-};
-#endif
-
 /*******************************************************************************
  *                            P U B L I C   D A T A
  *******************************************************************************
@@ -1201,15 +1162,12 @@ struct STA_RECORD *cnmGetStaRecByIndexWithoutInUseCheck(
 	uint8_t ucIndex);
 
 struct STA_RECORD *cnmGetStaRecByAddress(struct ADAPTER *prAdapter,
-	uint8_t ucBssIndex, const uint8_t aucPeerMACAddress[]);
+	uint8_t ucBssIndex, uint8_t aucPeerMACAddress[]);
 
 void cnmStaRecChangeState(struct ADAPTER *prAdapter,
 	struct STA_RECORD *prStaRec, uint8_t ucNewState);
 
 uint8_t *cnmStaRecAuthAddr(struct ADAPTER *prAdapter,
-	struct STA_RECORD *prStaRec);
-
-uint8_t cnmStaRecIsActive(struct ADAPTER *prAdapter,
 	struct STA_RECORD *prStaRec);
 
 int cnmShowBssInfo(struct ADAPTER *prAdapter, struct BSS_INFO *prBssInfo,

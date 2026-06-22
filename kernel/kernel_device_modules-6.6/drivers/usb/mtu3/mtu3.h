@@ -165,7 +165,8 @@ enum mtu3_power_state {
 	MTU3_STATE_POWER_ON,
 	MTU3_STATE_SUSPEND,
 	MTU3_STATE_RESUME,
-	MTU3_STATE_OFFLOAD,
+	MTU3_STATE_OFFLOAD, /* afe sram mode */
+	MTU3_STATE_OFFLOAD_IDLE, /* afe sram mode + dram hw */
 };
 
 enum mtu3_u2_lpm_mode {
@@ -388,6 +389,7 @@ struct ssusb_mtk {
 	bool ls_slp_quirk;
 	bool ldm_resp_delay;
 	int ls_slp_bypass;
+	bool force_vcore;
 };
 
 /**
@@ -618,5 +620,9 @@ extern const struct usb_ep_ops mtu3_ep0_ops;
 
 int get_dp_switch_status(struct ssusb_mtk *ssusb);
 void ssusb_parse_toggle_vbus(struct ssusb_mtk *ssusb, struct device_node *nd);
+
+void ssusb_offload_set_power_state(struct ssusb_offload *offload, enum mtu3_power_state state);
+int ssusb_offload_register(struct ssusb_offload *offload);
+int ssusb_offload_unregister(struct ssusb_offload *offload);
 
 #endif

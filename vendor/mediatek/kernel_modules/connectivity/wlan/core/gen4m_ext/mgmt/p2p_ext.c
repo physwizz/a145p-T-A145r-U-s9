@@ -101,9 +101,9 @@ uint32_t p2pSetSapRps(
 	rForceRps.ucForceSapRpsEn = fgEnSapRps;
 	rForceRps.ucSapRpsPhase= ucSetRpsPhase;
 	rForceRps.ucBssIdx = ucBssIdx;
-	DBGLOG(REQ, DEBUG, "ucForceSapRpsEn = %d\n",
+	DBGLOG(REQ, INFO, "ucForceSapRpsEn = %d\n",
 			fgEnSapRps);
-	DBGLOG(REQ, DEBUG, "ucSapRpsPhase = %d\n",
+	DBGLOG(REQ, INFO, "ucSapRpsPhase = %d\n",
 			ucSetRpsPhase);
 
 	wlanSendSetQueryCmd(prAdapter,	/* prAdapter */
@@ -131,7 +131,7 @@ uint32_t p2pSetSapSus(struct ADAPTER *prAdapter,
 
 	rForceSus.ucForceSapSusEn = fgEnSapSus;
 	rForceSus.ucBssIdx = ucBssIndex;
-	DBGLOG(REQ, DEBUG,
+	DBGLOG(REQ, INFO,
 		"ucBssIndex = %d, ucForceSapSusEn = %d\n",
 		ucBssIndex, fgEnSapSus);
 

@@ -60,6 +60,8 @@
 /* For WFD scan need about 15s. */
 #define SCN_BSS_DESC_STALE_SEC_WFD		30
 
+#define AP_SELECTION_DESC_STALE_SEC		20
+
 #define SCN_PROBE_DELAY_MSEC			0
 
 #define SCN_ADHOC_BSS_DESC_TIMEOUT_SEC		5 /* Second. */
@@ -100,11 +102,6 @@
 #define SCAN_TBTT_INFO_SET_OFFSET		(4)
 #endif
 
-#if CFG_SUPPORT_LLW_SCAN
-#define SCAN_CUST_DWELL_GAP_FOR_MAX_AND_MIN (10)
-#define SCAN_CUST_LLW_DWELLTIME_THRESHOLD (40)
-#endif
-
 /*----------------------------------------------------------------------------*/
 /* MSG_SCN_SCAN_REQ                                                           */
 /*----------------------------------------------------------------------------*/
@@ -120,6 +117,10 @@
 /*----------------------------------------------------------------------------*/
 #define SCN_SSID_MAX_NUM			CFG_SCAN_SSID_MAX_NUM
 #define SCN_SSID_MATCH_MAX_NUM			CFG_SCAN_SSID_MATCH_MAX_NUM
+
+#if CFG_SUPPORT_AGPS_ASSIST
+#define SCN_AGPS_AP_LIST_MAX_NUM		32
+#endif
 
 #if CFG_SUPPORT_BATCH_SCAN
 /*----------------------------------------------------------------------------*/
@@ -138,7 +139,7 @@
 
 #define SCN_SCAN_DONE_PRINT_BUFFER_LENGTH	500
 
-#define SCN_SCAN_OOB_PRINT_BUFFER_LENGTH	500
+#define BSSDESC_RCPI_TIMEOUT			10
 
 /*******************************************************************************
  *                             D A T A   T Y P E S
@@ -186,23 +187,6 @@ enum ENUM_SCAN_CHANNEL {
 	SCAN_CHANNEL_FULL_NO_DFS = 7,
 	SCAN_CHANNEL_6G = 8,
 	SCAN_CHANNEL_NUM
-};
-
-static const char * const apucScanTypeStr[SCAN_TYPE_NUM] = {
-	"PASSIVE",
-	"ACTIVE",
-};
-
-static const char * const apucScanChnlStr[SCAN_CHANNEL_NUM] = {
-	"FULL",
-	"2G4",
-	"5G",
-	"P2P_SOCIAL",
-	"SPECIFIED",
-	"5G_NO_DFS",
-	"5G_DFS_ONLY",
-	"FULL_NO_DFS",
-	"6G",
 };
 
 struct MSG_SCN_FSM {
@@ -262,7 +246,7 @@ enum ESP_TRAFFIC_AC {
 struct ML_INFO {
 	uint8_t fgValid;
 	uint8_t aucMldAddr[MAC_ADDR_LEN];
-	uint8_t ucLinkId;
+	uint8_t ucLinkIndex;
 	uint8_t ucMldId;
 	uint16_t u2ValidLinks;
 	uint8_t ucMaxSimuLinks;
@@ -272,7 +256,6 @@ struct ML_INFO {
 	uint16_t u2ApRemovalTimer;
 	uint8_t fgMldType;
 	struct MLD_BLOCKLIST_ITEM *prBlock;
-	uint8_t fgIsEmlsrPermittedAP;
 };
 #endif
 
@@ -344,7 +327,6 @@ struct BSS_DESC {
 #if (CFG_SUPPORT_802_11AX == 1)
 	u_int8_t fgIsHEPresent;
 	uint8_t ucHePhyCapInfo[HE_PHY_CAP_BYTE_NUM];
-	uint8_t ucBssColorInfo;
 #if (CFG_SUPPORT_WIFI_6G == 1)
 	u_int8_t fgIsHE6GPresent;
 	u_int8_t fgIsCoHostedBssPresent;
@@ -427,21 +409,6 @@ struct BSS_DESC {
 	u_int8_t fgIEOsen;
 	u_int8_t fgIERSNX;
 
-#if (CFG_SUPPORT_RSNO == 1)
-	enum ENUM_RSN_OVERRIDE eRsnSelectedRSNOverride;
-
-	struct RSN_INFO rRSNOInfo;
-	struct RSN_INFO rRSNO2Info;
-	struct RSNX_INFO rRSNXOInfo;
-	u_int8_t fgIERSNO;
-	u_int8_t fgIERSNO2;
-	u_int8_t fgIERSNXO;
-
-	uint16_t u2RsnoCap;
-	uint16_t u2Rsno2Cap;
-	uint16_t u2RsnxoCap;
-#endif /* CFG_SUPPORT_RSNO */
-
 #if CFG_ENABLE_WIFI_DIRECT
 	u_int8_t fgIsP2PPresent;
 	u_int8_t fgIsP2PReport;	/* TRUE: report to upper layer */
@@ -495,7 +462,7 @@ struct BSS_DESC {
 	OS_SYSTIME rJoinFailTime;
 
 	/* Support AP Selection */
-	struct AIS_BLOCKLIST_ITEM *prBlock;
+	struct AIS_BLACKLIST_ITEM *prBlack;
 	uint16_t u2Score;
 	uint32_t u4Tput;
 	uint8_t fgPicked;
@@ -505,8 +472,8 @@ struct BSS_DESC {
 #if CFG_SUPPORT_802_11K
 	struct NEIGHBOR_AP *prNeighbor;
 	uint8_t fgQueriedCandidates;
-#endif
 	uint16_t u2CurrCountryCode;
+#endif
 	uint8_t fgIsDisallowed;
 	uint8_t fgExistEspIE;
 	uint32_t u4EspInfo[ESP_AC_NUM];
@@ -525,12 +492,10 @@ struct BSS_DESC {
 	u_int8_t fgSeenProbeResp;
 	u_int8_t fgExistBssLoadIE;
 	u_int8_t fgMultiAnttenaAndSTBC;
-	u_int8_t fgIsMCC;
 	uint32_t u4UpdateIdx;
 	uint8_t ucScanMissCount;
 	uint8_t fgIotApActionValid;
-	uint8_t ucIotVer;
-	uint64_t u8IotApAct;
+	uint8_t ucIotApAct;
 	uint16_t u2MaximumMpdu;
 	/* end Support AP Selection */
 	int8_t cPowerLimit;
@@ -543,6 +508,7 @@ struct BSS_DESC {
 	uint8_t ucMlrType;
 	uint8_t ucMlrLength;
 	uint8_t ucMlrSupportBitmap;
+	uint8_t fsIsMlrSupport;
 #endif
 #if (CFG_SUPPORT_TX_PWR_ENV == 1)
 	uint8_t fgIsTxPwrEnvPresent;
@@ -553,6 +519,7 @@ struct BSS_DESC {
 #if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
 	enum ENUM_PWR_MODE_6G_TYPE e6GPwrMode;
 #endif
+
 };
 
 struct SCAN_PARAM {	/* Used by SCAN FSM */
@@ -589,8 +556,8 @@ struct SCAN_PARAM {	/* Used by SCAN FSM */
 	uint16_t u2OpChStayTime;
 	uint8_t ucDfsChDwellTime;
 	uint8_t ucPerScanChCnt;
-	uint16_t u2LLWChannelDwellTime;
-	uint16_t u2LLWChannelMinDwellTime;
+	uint16_t u2LLWMaxDwellTime;
+	uint16_t u2LLWMinDwellTime;
 #endif
 
 	uint8_t ucBssidNum;
@@ -631,7 +598,7 @@ struct SCAN_PARAM {	/* Used by SCAN FSM */
 	uint8_t aucIE[MAX_IE_LENGTH];
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
-	uint8_t fgCollectMldAP;
+	u_int8_t fgCollectMldAP;
 	uint16_t u2IELenMl;
 	uint8_t aucIEMl[MAX_BAND_IE_LENGTH];
 	uint16_t u2IELen2G4;
@@ -798,8 +765,8 @@ struct MSG_SCN_SCAN_REQ_V2 {
 	uint16_t u2OpChStayTime;	/* ms unit */
 	uint8_t ucDfsChDwellTime;	/* ms unit */
 	uint8_t ucPerScanChCnt;
-	uint16_t u2LLWChannelDwellTime;
-	uint16_t u2LLWChannelMinDwellTime;
+	uint16_t u2LLWMaxDwellTime;
+	uint16_t u2LLWMinDwellTime;
 #endif
 	uint8_t aucBSSID[MAC_ADDR_LEN];
 	enum ENUM_SCAN_CHANNEL eScanChannel;
@@ -821,7 +788,7 @@ struct MSG_SCN_SCAN_REQ_V2 {
 	uint8_t aucIE[MAX_IE_LENGTH];
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
-	uint8_t fgNeedMloScan;
+	u_int8_t fgNeedMloScan;
 	uint16_t u2IELenMl;
 	uint8_t aucIEMl[MAX_BAND_IE_LENGTH];
 	uint16_t u2IELen2G4;
@@ -858,6 +825,26 @@ struct MSG_SCN_SCAN_DONE {
 	uint8_t ucBssIndex;
 	enum ENUM_SCAN_STATUS eScanStatus;
 };
+
+#if CFG_SUPPORT_AGPS_ASSIST
+enum AP_PHY_TYPE {
+	AGPS_PHY_A,
+	AGPS_PHY_B,
+	AGPS_PHY_G,
+};
+
+struct AGPS_AP_INFO {
+	uint8_t aucBSSID[MAC_ADDR_LEN];
+	int16_t i2ApRssi;	/* -127..128 */
+	uint16_t u2Channel;	/* 0..256 */
+	enum AP_PHY_TYPE ePhyType;
+};
+
+struct AGPS_AP_LIST {
+	uint8_t ucNum;
+	struct AGPS_AP_INFO arApInfo[SCN_AGPS_AP_LIST_MAX_NUM];
+};
+#endif
 
 #if (CFG_SUPPORT_WIFI_RNR == 1)
 
@@ -916,7 +903,6 @@ struct BSS_DESC_SET {
 	enum ENUM_MLO_MODE eMloMode;
 	uint8_t ucMaxSimuLinks;
 	struct BSS_DESC *aprBssDesc[MLD_LINK_MAX];
-	uint8_t afgSyncOm[MLD_LINK_MAX];
 };
 
 /*******************************************************************************
@@ -950,6 +936,10 @@ extern const char aucScanLogPrefix[][SCAN_LOG_PREFIX_MAX_LEN];
 
 #define IS_2G_OP_CLASS(_opClass)	((_opClass >= 81) && (_opClass <= 84))
 #define IS_5G_OP_CLASS(_opClass)	((_opClass >= 115) && (_opClass <= 130))
+#define IS_5G_LOW_ONLY_OP_CLASS(_opClass)	\
+	((_opClass >= 115) && (_opClass <= 117))
+#define IS_5G_HIGH_ONLY_OP_CLASS(_opClass)	\
+	((_opClass >= 124) && (_opClass <= 127))
 #define IS_6G_OP_CLASS(_opClass)	((_opClass >= 131) && (_opClass <= 137))
 #define IS_EHT_OP_CLASS(_opClass)	(_opClass == 137)
 #define IS_6G_PSC_CHANNEL(_ch)		(((_ch - 5) % 16) == 0)
@@ -1134,8 +1124,7 @@ scnFsmGenerateScanDoneMsg(struct ADAPTER *prAdapter,
 			  enum ENUM_MSG_ID eMsgId,
 			  uint8_t ucSeqNum,
 			  uint8_t ucBssIndex,
-			  enum ENUM_SCAN_STATUS eScanStatus,
-			  enum EUNM_MSG_SEND_METHOD eMethod);
+			  enum ENUM_SCAN_STATUS eScanStatus);
 
 /*----------------------------------------------------------------------------*/
 /* Query for sparse channel                                                   */
@@ -1152,6 +1141,10 @@ struct BSS_DESC *scanSearchBssDescByBssidAndLatestUpdateTime(
 						struct ADAPTER *prAdapter,
 						uint8_t aucBSSID[]);
 #endif /* CFG_SUPPORT_PASSPOINT */
+
+#if CFG_SUPPORT_AGPS_ASSIST
+void scanReportScanResultToAgps(struct ADAPTER *prAdapter);
+#endif
 
 #if CFG_SUPPORT_SCHED_SCAN
 u_int8_t scnFsmSchedScanRequest(struct ADAPTER *prAdapter,
@@ -1170,8 +1163,6 @@ void scnSetSchedScanPlan(struct ADAPTER *prAdapter,
 			uint16_t u2ScanInterval);
 
 #endif /* CFG_SUPPORT_SCHED_SCAN */
-
-u_int8_t scnDoAllowScanCheck(struct ADAPTER *prAdapter);
 
 #if CFG_SUPPORT_SCAN_NO_AP_RECOVERY
 void scnDoZeroMdrdyRecoveryCheck(struct ADAPTER *prAdapter,
@@ -1208,7 +1199,6 @@ void scanLogCacheFlushBSS(struct LINK *prList,
 void scanLogCacheFlushAll(struct ADAPTER *prAdapter,
 	struct SCAN_LOG_CACHE *prScanLogCache,
 	enum ENUM_SCAN_LOG_PREFIX prefix);
-uint8_t *scanLogSSIDType(uint8_t ucSSIDType);
 
 void scanFillChnlIdleSlot(struct ADAPTER *ad, enum ENUM_BAND eBand,
 	uint8_t ucChNum, uint16_t u2IdleTime);
@@ -1241,6 +1231,9 @@ void scanParseWMMIE(struct ADAPTER *prAdapter,
 void scanHandleOceIE(struct SCAN_PARAM *prScanParam,
 	struct CMD_SCAN_REQ_V2 *prCmdScanReq);
 
+uint8_t scanHandleOceChannel(struct ADAPTER *prAdapter,
+	enum ENUM_BAND eBand, uint8_t ucChannel);
+
 uint8_t	*scanGetFilsCacheIdFromBssDesc(struct BSS_DESC *bss);
 
 void scnFsmDumpScanDoneInfo(struct ADAPTER *prAdapter,
@@ -1261,7 +1254,5 @@ enum ENUM_BAND scanOpClassToBand(uint8_t ucOpClass);
 
 void updateLinkStatsApRec(struct ADAPTER *prAdapter,
 		struct BSS_DESC *prBssDesc);
-
-const char *SSID2STR(const uint8_t *ssid, uint8_t ssid_len);
 
 #endif /* _SCAN_H */

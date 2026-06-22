@@ -624,6 +624,8 @@ void kthread_unpark(struct task_struct *k)
 {
 	struct kthread *kthread = to_kthread(k);
 
+	if (!test_bit(KTHREAD_SHOULD_PARK, &kthread->flags))
+		return;
 	/*
 	 * Newly created kthread was parked when the CPU was offline.
 	 * The binding was lost and we need to set it again.
@@ -1559,4 +1561,5 @@ struct cgroup_subsys_state *kthread_blkcg(void)
 	}
 	return NULL;
 }
+EXPORT_SYMBOL_GPL(kthread_blkcg);
 #endif

@@ -13,11 +13,6 @@
 #include <linux/usb/typec_dp.h>
 
 #include "inc/tcpci_typec.h"
-/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 start*/
-#if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-extern void usbpd_pm_set_otg_txmode(int enable);
-#endif
-/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
 #define RT_PD_MANAGER_VERSION	"1.0.11"
 
 static bool dbg_log_en;
@@ -130,11 +125,6 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 				 "%s OTG plug in, polarity = %d\n",
 				 __func__, noti->typec_state.polarity);
 			/* enable host connection */
-			/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 start*/
-			#if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-			usbpd_pm_set_otg_txmode(1);
-			#endif
-			/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
 			typec_set_data_role(rpmd->typec_port[idx], TYPEC_HOST);
 			typec_set_pwr_role(rpmd->typec_port[idx], TYPEC_SOURCE);
 			switch (noti->typec_state.local_rp_level) {
@@ -161,11 +151,6 @@ static int pd_tcp_notifier_call(struct notifier_block *nb,
 			    old_state == TYPEC_ATTACHED_DEBUG) &&
 			    new_state == TYPEC_UNATTACHED) {
 			dev_info(rpmd->dev, "%s OTG plug out\n", __func__);
-			/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 start*/
-			#if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-			usbpd_pm_set_otg_txmode(0);
-			#endif
-			/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
 			/* disable host connection */
 		} else if (old_state == TYPEC_UNATTACHED &&
 			   new_state == TYPEC_ATTACHED_AUDIO) {

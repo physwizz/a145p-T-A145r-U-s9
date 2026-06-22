@@ -95,6 +95,7 @@ enum feature_types_20 {
 	feature_immutable_dst_exception = (1 << 14),
 	feature_immutable_root = (1 << 15),
 	feature_immutable_root_status = (1 << 16),
+	feature_immutable_tgt_exception = (1 << 18),
 
 	/* version 2.0 */
 	d_tree_item_path = (1UL << 31),

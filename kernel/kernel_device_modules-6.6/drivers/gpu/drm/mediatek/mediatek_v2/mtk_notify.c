@@ -49,7 +49,7 @@ int uevent_dev_register(struct mtk_uevent_dev *udev)
 		ret = 0;
 	} else {
 		pr_info("device create fail,index:0x%x\n", udev->index);
-		ret = -1;
+		return -1;
 	}
 
 	dev_set_drvdata(udev->dev, udev);
@@ -193,8 +193,8 @@ int mtk_check_powermode(struct drm_atomic_state *state, int mode)
 
 		powerMode = (new_state->prop_val[CRTC_PROP_DOZE_ACTIVE] << 1) |
 			new_crtc_state->active;
-		pre_powerMode = (new_state->prop_val[CRTC_PROP_DOZE_ACTIVE] << 1) |
-			new_crtc_state->active;
+		pre_powerMode = (old_state->prop_val[CRTC_PROP_DOZE_ACTIVE] << 1) |
+			old_crtc_state->active;
 
 		DDPINFO("%s : %s -> %s\n", __func__,
 			power_mode_name[pre_powerMode], power_mode_name[powerMode]);

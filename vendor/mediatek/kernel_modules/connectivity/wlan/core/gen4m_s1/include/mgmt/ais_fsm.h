@@ -419,6 +419,7 @@ struct CONNECTION_SETTINGS {
 	uint8_t *pucAssocIEs;
 	size_t assocIeLen;
 	u_int8_t fgAuthOsenWithRSN;
+        uint8_t ucBTMEnableMode;
 };
 
 struct AIS_OFF_CHNL_TX_REQ_INFO {

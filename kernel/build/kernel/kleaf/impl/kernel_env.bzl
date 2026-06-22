@@ -209,6 +209,11 @@ def _kernel_env_impl(ctx):
             quoted_clangtools_bin = shell.quote(bindgen.dirname),
         )
 
+    if ctx.file.clang_autofdo_profile:
+        set_clang_autofdo_profile_cmd = "export CLANG_AUTOFDO_PROFILE=${ROOT_DIR}/" + ctx.file.clang_autofdo_profile.path
+    else:
+        set_clang_autofdo_profile_cmd = ""
+
     env_setup_cmds = _get_env_setup_cmds(ctx)
     pre_env_script = ctx.actions.declare_file("{}/pre_env.sh".format(ctx.attr.name))
     ctx.actions.write(pre_env_script, env_setup_cmds.pre_env)
@@ -221,11 +226,6 @@ def _kernel_env_impl(ctx):
         bin_dir_and_workspace_root = paths.join(ctx.bin_dir.path, kleaf_repo_workspace_root)
     else:
         bin_dir_and_workspace_root = ctx.bin_dir.path
-
-    if ctx.file.clang_autofdo_profile:
-        set_clang_autofdo_profile_cmd = "export CLANG_AUTOFDO_PROFILE=${ROOT_DIR}/" + ctx.file.clang_autofdo_profile.path
-    else:
-        set_clang_autofdo_profile_cmd = ""
 
     command += """
         # create a build environment
@@ -621,8 +621,9 @@ kernel_env = rule(
             values = ["true", "false", "auto"],
         ),
         "make_goals": attr.string_list(doc = "`MAKE_GOALS`"),
-        "clang_autofdo_profile": attr.label(allow_single_file = True),
         "_rust_tools": attr.label_list(default = _get_rust_tools, allow_files = True),
+        "kcflags": attr.string_list(),
+        "clang_autofdo_profile": attr.label(allow_single_file = True),
         "_build_utils_sh": attr.label(
             allow_single_file = True,
             default = Label("//build/kernel:build_utils"),

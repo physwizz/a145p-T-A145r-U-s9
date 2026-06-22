@@ -39,6 +39,10 @@
 #include "../audio_scp/mtk-scp-audio-pcm.h"
 #endif
 
+#if IS_ENABLED(CONFIG_SND_SOC_MEDIATEK_CS35L45)
+#include "../../codecs/cirrus/cs35l45.h"
+#endif
+
 #define MTK_SPK_NAME "Speaker Codec"
 #define MTK_SPK_REF_NAME "Speaker Codec Ref"
 
@@ -72,6 +76,13 @@ static struct mtk_spk_i2c_ctrl mtk_spk_list[MTK_SPK_TYPE_NUM] = {
 		.codec_name = "tfa98xx",
 	},
 #endif /* CONFIG_SND_SOC_TFA9874 */
+
+#if IS_ENABLED(CONFIG_SND_SOC_MEDIATEK_CS35L45)
+	[MTK_SPK_CIRRUS_CS35L45] = {
+		.codec_dai_name = "cs35l45-aif",
+		.codec_name = "cs35l45",
+	},
+#endif /* CONFIG_SND_SOC_MEDIATEK_CS35L45 */
 };
 
 static int mtk_spk_i2c_probe(struct i2c_client *client)

@@ -21,6 +21,7 @@ const struct feature_match_entry feature_match[] = {
 	{"feature_immutable_dst_exception", feature_immutable_dst_exception},
 	{"feature_umhbin_path", feature_umhbin_path},
 	{"feature_integrity_check", feature_integrity_check},
+	{"feature_immutable_tgt_exception", feature_immutable_tgt_exception},
 };
 
 void feature_to_string(char *str, unsigned int flags)
@@ -39,22 +40,6 @@ void feature_to_string(char *str, unsigned int flags)
 			strcat(str, ", ");
 		strcat(str, "feature_for_recovery");
 	}
-}
-
-static int check_array_size(struct rule_item_struct *ptr)
-{
-	unsigned long offset = (unsigned long)ptr - (unsigned long)defex_packed_rules;
-	int min_size = (global_data_size < packfiles_size)?global_data_size:packfiles_size;
-
-	offset += sizeof(struct rule_item_struct);
-
-	if (offset > min_size)
-		return 1;
-
-	offset += ptr->size;
-	if (offset > min_size)
-		return 2;
-	return 0;
 }
 
 static int parse_items(struct d_tree_item *base, size_t path_length, int level)

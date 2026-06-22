@@ -41,12 +41,14 @@
 #define NAN_ATTR_ID(fp)		(((struct _NAN_ATTR_HDR_T *)fp)->ucAttrId)
 #define NAN_ATTR_LEN(fp)	(((struct _NAN_ATTR_HDR_T *)fp)->u2Length)
 #define NAN_ATTR_SIZE(fp)	(NAN_ATTR_HDR_LEN + NAN_ATTR_LEN(fp))
+#define NAN_ATTR_END(fp)	((uint8_t *)(fp) + NAN_ATTR_SIZE(fp))
 
 #define NAN_AVAIL_ENTRY_HDR_LEN 2
 #define NAN_AVAIL_ENTRY_LEN(fp)		\
 	(((struct _NAN_AVAILABILITY_ENTRY_T *)fp)->u2Length)
 #define NAN_AVAIL_ENTRY_SIZE(fp)	\
 	(NAN_AVAIL_ENTRY_HDR_LEN + NAN_AVAIL_ENTRY_LEN(fp))
+#define NAN_AVAIL_ENTRY_END(fp)	((uint8_t *)(fp) + NAN_AVAIL_ENTRY_SIZE(fp))
 
 /* NAN 4.0 Table 58. Service Protocol Types */
 enum NAN_SERVICE_PROTOCOL_TYPES {
@@ -126,7 +128,7 @@ enum NAN_SERVICE_PROTOCOL_TYPES {
 #define NAN_REASON_CODE_NDP_REJECTED 10
 #define NAN_REASON_CODE_NDL_UNACCEPTABLE 11
 #define NAN_REASON_CODE_RANGING_SCHEDULE_UNACCEPTABLE 12
-#define NAN_REASON_CODE_RANGING_BOOTSTRAPPING_REJECTED 13
+#define NAN_REASON_CODE_PAIRING_BOOTSTRAPPING_REJECTED 13
 
 /* NAN NDP Attribute - Type and Status */
 #define NAN_ATTR_NDP_TYPE_MASK BITS(0, 3)
@@ -299,20 +301,20 @@ enum NAN_ATTR_NDPE_TLV_TYPES {
 
 /* NAN 4.0 Table 79. Device Capability attribute format, Supported Bands */
 enum NAN_SUPPORTED_BANDS {
-	/* RESERVED for TV whitespace = 0 */
-	/* Sub-1 GHz (excluding TV whitespace) = 1 */
+	/* RESERVED for TV white spaces = 0 */
+	/* Sub-1 GHz (excluding TV white spaces) = 1 */
 	NAN_SUPPORTED_BAND_ID_2P4G = 2,
 	/* Reserved (for 3.6 GHz) = 3 */
 	NAN_SUPPORTED_BAND_ID_5G = 4,
 	/* Reserved (for 60 GHz) = 5 */
 	/* Reserved (for 45 GHz) = 6 */
-	NAN_PROPRIETY_BAND_ID_6G = 6, /* from IOT devices */
+	NAN_PROPRIETARY_BAND_ID_6G = 6, /* from IOT devices */
 	NAN_SUPPORTED_BAND_ID_6G = 7,
 };
 
 #define NAN_SUPPORTED_2G_BIT    BIT(NAN_SUPPORTED_BAND_ID_2P4G)
 #define NAN_SUPPORTED_5G_BIT    BIT(NAN_SUPPORTED_BAND_ID_5G)
-#define NAN_PROPRIETARY_6G_BIT  BIT(NAN_PROPRIETY_BAND_ID_6G)
+#define NAN_PROPRIETARY_6G_BIT  BIT(NAN_PROPRIETARY_BAND_ID_6G)
 #define NAN_SUPPORTED_6G_BIT    BIT(NAN_SUPPORTED_BAND_ID_6G)
 
 /* NAN 4.0 Table 81. Operation Mode field format
@@ -444,7 +446,6 @@ enum _NAN_ACTION_T {
 	NAN_ACTION_SCHEDULE_RESPONSE = 11,
 	NAN_ACTION_SCHEDULE_CONFIRM = 12,
 	NAN_ACTION_SCHEDULE_UPDATE_NOTIFICATION = 13,
-	NAN_ACTION_FOLLOW_UP = 14,
 	NAN_ACTION_NUM
 };
 
@@ -807,7 +808,7 @@ struct _NAN_AVAILABILITY_TIMEBITMAP_ENTRY_T {
 		struct _NAN_ATTR_TIME_BITMAP_CONTROL_T rTimeBitmapCtrl;
 	};
 	uint8_t ucTimeBitmapLength;
-	uint8_t aucTimeBitmapAndBandChnlEntry[];
+	uint8_t aucTimeBitmapAndBandChnl[];
 } __KAL_ATTRIB_PACKED__;
 
 /**
@@ -997,7 +998,13 @@ struct _NAN_ATTR_SHARED_KEY_DESCRIPTOR_T {
 __KAL_ATTRIB_PACKED_FRONT__
 struct _NAN_CHNL_ENTRY_T {
 	uint8_t ucOperatingClass;
-	uint16_t u2ChannelBitmap;
+	union {
+		uint16_t u2ChannelBitmap;
+		struct {
+			uint8_t ucChannelStart;
+			uint8_t ucChannelNum;
+		};
+	};
 	uint8_t ucPrimaryChnlBitmap;
 	uint16_t u2AuxChannelBitmap; /* optional, present if ucNonContiguous */
 } __KAL_ATTRIB_PACKED__;

@@ -8,6 +8,7 @@
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/io.h>
+#include <linux/device.h>
 #include <linux/module.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
@@ -24,9 +25,11 @@
 #include <linux/atomic.h>
 #include <linux/sched.h>
 #include <linux/sched/clock.h>
+#include <linux/serial_core.h>
 
 #include "8250.h"
 #include "8250_mtk.h"
+#include "../serial_base.h"
 #ifdef CONFIG_SERIAL_8250_DMA
 #include "../../../dma/mediatek/mtk-uart-apdma.h"
 #endif
@@ -1301,6 +1304,39 @@ int mtk8250_uart_hub_dev0_clear_tx_request(void)
 }
 EXPORT_SYMBOL(mtk8250_uart_hub_dev0_clear_tx_request);
 
+void mtk8250_set_runtime_active_status(struct tty_struct *tty)
+{
+	struct uart_state *state;
+	struct uart_port *port;
+	struct serial_port_device *port_dev;
+
+	if (tty == NULL) {
+		pr_info("[%s] tty is null\n", __func__);
+		return;
+	}
+
+	state = tty->driver_data;
+	if (state == NULL) {
+		pr_info("[%s] state is null\n", __func__);
+		return;
+	}
+
+	port = state->uart_port;
+	if (port == NULL) {
+		pr_info("[%s] port is null\n", __func__);
+		return;
+	}
+
+	port_dev = port->port_dev;
+	if (port_dev == NULL) {
+		pr_info("[%s] port_dev is null\n", __func__);
+		return;
+	}
+
+	port_dev->dev.power.runtime_status = RPM_ACTIVE;
+}
+EXPORT_SYMBOL(mtk8250_set_runtime_active_status);
+
 static int mtk8250_polling_rx_handle_complete(unsigned int count)
 {
 	int dma_state = 0;
@@ -1382,6 +1418,9 @@ int mtk8250_uart_hub_dev0_clear_rx_request(struct tty_struct *tty)
 
 		if (hub_uart_data != NULL && hub_uart_data->support_wakeup == 1) {
 			mutex_lock(&hub_uart_data->clk_mutex);
+			/*clear uart wakeup status and enable wakeup*/
+			atomic_set(&hub_uart_data->wakeup_state, 0);
+			mtk8250_set_wakeup_irq(hub_uart_data, true);
 			/*mask dma irq*/
 			#if defined(KERNEL_mtk_uart_set_apdma_rx_irq)
 				KERNEL_mtk_uart_set_apdma_rx_irq(false);
@@ -1414,9 +1453,6 @@ int mtk8250_uart_hub_dev0_clear_rx_request(struct tty_struct *tty)
 				if (up)
 					mtk8250_set_rx_threshold(up, UART_FCR_R_TRIG_10, 0);
 			}
-			/*clear uart wakeup status and enable wakeup*/
-			mtk8250_set_wakeup_irq(hub_uart_data, true);
-			atomic_set(&hub_uart_data->wakeup_state, 0);
 			mutex_unlock(&hub_uart_data->clk_mutex);
 		}
 

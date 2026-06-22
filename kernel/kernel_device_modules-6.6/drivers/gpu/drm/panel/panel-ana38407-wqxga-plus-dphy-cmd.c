@@ -106,6 +106,7 @@ struct lcm {
 	struct drm_panel panel;
 	struct backlight_device *backlight;
 	struct gpio_desc *reset_gpio;
+	struct gpio_desc *octa_gpio;
 	struct gpio_desc *bias_pos, *bias_neg;
 
 	bool prepared;
@@ -400,6 +401,16 @@ static int lcm_unprepare(struct drm_panel *panel)
 		devm_gpiod_put(ctx->dev, ctx->bias_pos);
 	}
 
+	ctx->octa_gpio =
+		devm_gpiod_get(ctx->dev, "octa", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->octa_gpio)) {
+		dev_err(ctx->dev, "%s: cannot get octa_gpio %ld\n",
+			__func__, PTR_ERR(ctx->octa_gpio));
+	} else {
+		gpiod_set_value(ctx->octa_gpio, 0);
+		devm_gpiod_put(ctx->dev, ctx->octa_gpio);
+	}
+
 	return 0;
 }
 
@@ -410,6 +421,16 @@ static int lcm_prepare(struct drm_panel *panel)
 
 	if (ctx->prepared)
 		return 0;
+
+	ctx->octa_gpio =
+		devm_gpiod_get(ctx->dev, "octa", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->octa_gpio)) {
+		dev_err(ctx->dev, "%s: cannot get octa_gpio %ld\n",
+			__func__, PTR_ERR(ctx->octa_gpio));
+	} else {
+		gpiod_set_value(ctx->octa_gpio, 1);
+		devm_gpiod_put(ctx->dev, ctx->octa_gpio);
+	}
 
 	ctx->bias_pos = devm_gpiod_get_index(ctx->dev,
 		"bias", 0, GPIOD_OUT_HIGH);
@@ -1270,6 +1291,14 @@ static int lcm_probe(struct mipi_dsi_device *dsi)
 			__func__, PTR_ERR(ctx->bias_pos));
 	} else {
 		devm_gpiod_put(dev, ctx->bias_pos);
+	}
+
+	ctx->octa_gpio = devm_gpiod_get(dev, "octa", GPIOD_OUT_HIGH);
+	if (IS_ERR(ctx->octa_gpio)) {
+		dev_err(dev, "%s: cannot get octa-gpios %ld\n",
+			__func__, PTR_ERR(ctx->octa_gpio));
+	} else {
+		devm_gpiod_put(dev, ctx->octa_gpio);
 	}
 
 	ctx->prepared = true;

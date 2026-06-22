@@ -2518,6 +2518,7 @@ static void mtk_drm_cwb_info_init(struct drm_crtc *crtc)
 			crtc->state->adjusted_mode.hdisplay);
 	}
 
+	mutex_init(&cwb_info->cwb_mutex);
 	/*alloc && config two fb*/
 	if (!cwb_info->buffer[0].fb)
 		set_cwb_info_buffer(crtc, 0);
@@ -5430,9 +5431,11 @@ static void process_dbg_opt(const char *opt)
 	} else if (strncmp(opt, "lcd:", 4) == 0) {
 		struct mtk_drm_private *priv = drm_dev->dev_private;
 
-		if (strncmp(opt + 4, "on", 2) == 0)
+		if (strncmp(opt + 4, "offon", strlen("offon")) == 0)
+			noti_uevent_user(&priv->uevent_data, 2);
+		else if (strncmp(opt + 4, "on", strlen("on")) == 0)
 			noti_uevent_user(&priv->uevent_data, 1);
-		else if (strncmp(opt + 4, "off", 3) == 0)
+		else if (strncmp(opt + 4, "off", strlen("off")) == 0)
 			noti_uevent_user(&priv->uevent_data, 0);
 	} else if (strncmp(opt, "wait_frame_test:", strlen("wait_frame_test:")) == 0) {
 		if (strncmp(opt + strlen("wait_frame_test:"), "1", 1) == 0)
@@ -5536,21 +5539,28 @@ static ssize_t cwb_debug_read(struct file *file, char __user *ubuf, size_t count
 	height = cwb_info->src_roi.height;
 	Bpp = mtk_get_format_bpp(cwb_info->buffer[0].fb->format->format);
 	cwb_buffer_size = sizeof(u8) * width * height * Bpp;
-	if (cwb_buffer_idx < 0 || cwb_buffer_idx >= CWB_BUFFER_NUM)
+
+	mutex_lock(&cwb_info->cwb_mutex);
+	if (cwb_buffer_idx < 0 || cwb_buffer_idx >= CWB_BUFFER_NUM) {
+		mutex_unlock(&cwb_info->cwb_mutex);
 		return -EFAULT;
+	}
 	addr_va = cwb_info->buffer[cwb_buffer_idx].addr_va;
 	if (*ppos != 0)
 		goto out;
 
 	n = cwb_buffer_size;
 out:
+	mutex_unlock(&cwb_info->cwb_mutex);
 	if (n < 0)
 		return -EINVAL;
 	ret = simple_read_from_buffer(ubuf, count, ppos, (void *)addr_va, n);
 	if (ret == 0) {
+		mutex_lock(&cwb_info->cwb_mutex);
 		cwb_buffer_idx += 1;
 		if (cwb_buffer_idx >= CWB_BUFFER_NUM)
 			cwb_buffer_idx = 0;
+		mutex_unlock(&cwb_info->cwb_mutex);
 	}
 	return ret;
 }

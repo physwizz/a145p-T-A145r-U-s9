@@ -1467,6 +1467,9 @@ uint8_t apSelectionIsBssDescQualify(struct ADAPTER *prAdapter,
 {
 	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
 
+	if (prAdapter->rNchoInfo.fgNCHOEnabled)
+		return TRUE;
+
 	switch (eRoamReason) {
 	case ROAMING_REASON_POOR_RCPI:
 	case ROAMING_REASON_RETRY:
@@ -1476,7 +1479,7 @@ uint8_t apSelectionIsBssDescQualify(struct ADAPTER *prAdapter,
 		 * Absolute score value comparing to current AP
 		 */
 		if (u4CandidateApScore <=
-			(u4ConnectedApScore + prWifiVar->ucRCMinRoamDetla))
+			(u4ConnectedApScore + prWifiVar->ucRCMinRoamDelta))
 			return FALSE;
 
 		/* Roam Delta

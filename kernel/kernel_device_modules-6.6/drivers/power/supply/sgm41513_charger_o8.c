@@ -1609,13 +1609,10 @@ static irqreturn_t sgm415xx_irq_handler_thread(int irq, void *private)
     if (!vbus_gd_pre && sgm->vbus_gd) {
         pr_err("[%s] adapter/usb inserted\n", __func__);
         sgm->force_detect_count = 0;
-        sgm->chg_config = true;
-
     } else if (vbus_gd_pre && !sgm->vbus_gd) {
         pr_err("[%s] adapter/usb remove\n", __func__);
         sgm415xx_chg_set_usbsw(sgm, USBSW_USB);
         sgm415xx_set_ichrg(sgm, SGM415XX_ICHG_LIM);
-        sgm->chg_config = false;
         cancel_delayed_work_sync(&sgm->force_detect_dwork);
         cancel_delayed_work_sync(&sgm->hvdcp_done_work);
         sgm->hvdcp_done = false;
@@ -1883,10 +1880,17 @@ static int sgm415xx_parse_dt(struct sgm415xx_device *sgm)
     return 0;
 }
 
+/*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+extern void usbpd_pm_set_otg_txmode(int enable);
+/*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 static int sgm415xx_enable_vbus(struct regulator_dev *rdev)
 {
     struct sgm415xx_device *sgm = charger_get_data(s_chg_dev_otg);
     int ret = 0;
+
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    usbpd_pm_set_otg_txmode(true);
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 
     pr_info("[%s] enter\n", __func__);
 
@@ -1900,6 +1904,10 @@ static int sgm415xx_disable_vbus(struct regulator_dev *rdev)
 {
     struct sgm415xx_device *sgm = charger_get_data(s_chg_dev_otg);
     int ret = 0;
+
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    usbpd_pm_set_otg_txmode(false);
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 
     pr_info("[%s] enter\n", __func__);
 

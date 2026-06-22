@@ -30,12 +30,4 @@ void HdmWifi_SysfsInit(void);
 void HdmWifi_SysfsUninit(void);
 #endif
 
-void iniFileErrorCheck (struct ADAPTER *prAdapter, uint8_t **ppucIniBuf,
-	uint32_t *pu4ReadSize);
-
-/* temp solution for build pass */
-int _kalSprintf(char *buf, const char *fmt, ...);
-#define kalSprintf(buf, fmt, ...)          \
-	_kalSprintf((char *)(buf), (const char *)(fmt), ##__VA_ARGS__)
-
 #endif /* _GL_SYS_H */

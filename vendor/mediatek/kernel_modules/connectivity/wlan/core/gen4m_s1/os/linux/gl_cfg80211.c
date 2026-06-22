@@ -6364,6 +6364,39 @@ int testmode_get_roam_trigger(IN struct wiphy *wiphy,
 		buf, i4BytesWritten + 1);
 }
 
+int testmode_set_enable_btm(IN struct wiphy *wiphy,
+	IN char *pcCommand, IN int i4TotalLen, IN uint8_t ucBssIndex)
+{
+	int32_t i4Argc = 0;
+	int8_t *apcArgv[WLAN_CFG_ARGV_MAX] = {0};
+	int32_t i4Ret = -1;
+	uint32_t rStatus = WLAN_STATUS_FAILURE;
+	struct GLUE_INFO *prGlueInfo = NULL;
+	struct CONNECTION_SETTINGS *prConnSettings = NULL;
+
+	DBGLOG(INIT, INFO, "command is %s\n", pcCommand);
+
+	WIPHY_PRIV(wiphy, prGlueInfo);
+	prConnSettings = aisGetConnSettings(prGlueInfo->prAdapter, ucBssIndex);
+	rStatus = wlanCfgParseArgument(pcCommand, &i4Argc, apcArgv);
+
+	if (rStatus == WLAN_STATUS_SUCCESS && i4Argc >= 2) {
+		i4Ret = kalkStrtou8(apcArgv[1], 0,
+				&prConnSettings->ucBTMEnableMode);
+		prConnSettings->ucBTMEnableMode += 1;
+		if (i4Ret) {
+			DBGLOG(REQ, ERROR, "parse u4Param error %d\n", i4Ret);
+			return WLAN_STATUS_INVALID_DATA;
+		}
+	} else {
+		DBGLOG(REQ, ERROR, "Set enable BTM failed\n");
+		return WLAN_STATUS_INVALID_DATA;
+	}
+
+	return rStatus;
+
+}
+
 int testmode_get_roam_scn_freq(IN struct wiphy *wiphy,
 	IN char *pcCommand, IN int i4TotalLen)
 {
@@ -7142,6 +7175,8 @@ int32_t mtk_cfg80211_process_str_cmd(IN struct wiphy *wiphy,
 		rStatus = testmode_set_roam_trigger(wiphy, cmd, len);
 	} else if (strnicmp(cmd, "GETROAMTRIGGER_LEGACY", 21) == 0) {
 		return testmode_get_roam_trigger(wiphy, cmd, len);
+	} else if (strnicmp(cmd, "SET_ENABLE_BTM", 14) == 0) {
+		rStatus = testmode_set_enable_btm(wiphy, cmd, len, ucBssIndex);
 #if CFG_SUPPORT_NCHO
 	} else if (strnicmp(cmd, CMD_NCHO_ROAM_TRIGGER_SET,
 			  strlen(CMD_NCHO_ROAM_TRIGGER_SET)) == 0) {

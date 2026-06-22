@@ -280,6 +280,8 @@ void aisInitializeConnectionSettings(IN struct ADAPTER *prAdapter,
 
 	prConnSettings->fgIsAdHocQoSEnable = FALSE;
 
+	prConnSettings->ucBTMEnableMode = 0;
+
 #if CFG_SUPPORT_802_11AC
 	prAdapter->rWifiVar.eDesiredPhyConfig
 		= PHY_CONFIG_802_11ABGNAC;
@@ -3636,6 +3638,8 @@ enum ENUM_AIS_STATE aisFsmJoinCompleteAction(IN struct ADAPTER *prAdapter,
 
 			/* 1. Reset retry count */
 			prAisFsmInfo->ucConnTrialCount = 0;
+
+			prConnSettings->ucBTMEnableMode = 0;
 
 			/* Completion of roaming */
 			if (prAisBssInfo->eConnectionState ==

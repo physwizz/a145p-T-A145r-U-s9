@@ -1561,11 +1561,6 @@ static int sgm41606S_charger_probe(struct i2c_client *client)
     client->addr = 0x65;
     sgm->dev = &client->dev;
     sgm->client = client;
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 start*/
-    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_SGM41606S);
-    #endif
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 end*/
     sgm->regmap = devm_regmap_init_i2c(client,
                             &sgm41606S_regmap_config);
     if (IS_ERR(sgm->regmap)) {
@@ -1647,7 +1642,12 @@ static int sgm41606S_charger_probe(struct i2c_client *client)
     g_gxy_cp_ops.get_otg_txmode = sgm41606S_usbpd_get_otg_txmode;
     sgm->otg_tx_mode = false;
     /*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
-    dev_err(sgm->dev, "sgm41606S[%s] probe successfully!\n", 
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
+    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_SGM41606S);
+    #endif
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
+    dev_err(sgm->dev, "sgm41606S[%s] probe successfully!\n",
             sgm->mode == SGM41606S_MASTER ? "master" : "slave");
     return 0;
 

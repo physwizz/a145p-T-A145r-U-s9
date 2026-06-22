@@ -40,18 +40,6 @@
 #define VLP_NON_SUPPORT     FALSE /* Non-support 6G Very Low Power mode   */
 #endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
 
-
-/* Include channel /rate group power limit header file */
-#if (CFG_SUPPORT_PWR_LMT_EMI == 1)
-#if (COUNTRY_CHANNEL_TXPOWER_LIMIT_CHANNEL_DEFINE == 1)
-#include "rlm_txpwr_data_emi_pri.h"
-#else
-#include "rlm_txpwr_data_emi_cent.h"
-#endif /* COUNTRY_CHANNEL_TXPOWER_LIMIT_CHANNEL_DEFINE == 1*/
-#else
-#include "rlm_txpwr_data.h"
-#endif /*CFG_SUPPORT_PWR_LMT_EMI == 1*/
-
 #if CFG_SUPPORT_PWR_LIMIT_COUNTRY
 #if (CFG_SUPPORT_WIFI_6G == 1)
 /*Set to MAX_TX_PWR = 63dBm if larger than it*/
@@ -1231,7 +1219,11 @@ struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 	}
 	,
 #endif
-
+	{	{'E', 'U'}
+		, {63, 63, 63, 63, 63, 63, 63, 63, 63}
+		, 0
+	}
+	,
 	/*Default*/
 	{	{0, 0}
 		, {63, 63, 63, 63, 63, 63, 63, 63, 63}
@@ -1242,6 +1234,30 @@ struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 /* For 802.11ax 6G Very Low Power mode setting */
 struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 	g_rRlmPowerLimitDefault_VLP[] = {
+	{	{'K', 'R'}
+		, {46, 34, 46, 46, 46, 63, 63, 63, 63}
+		, 0
+	},
+	{	{'E', 'U'}
+		, {63, 63, 63, 63, 63, 63, 63, 63, 63}
+		, 0
+	},
+	{	{'C', 'N'}
+		, {40, 46, 46, 63, 63, 63, 63, 63, 63}
+		, 0
+	},
+	{	{'T', 'W'}
+		, {60, 48, 48, 48, 60, 63, 63, 63, 63}
+		, 0
+	},
+	{	{'U', 'S'}
+		, {60, 48, 48, 48, 60, 63, 63, 63, 63}
+		, 0
+	},
+	{	{'J', 'P'}
+		, {46, 46, 46, 46, 63, 63, 63, 63, 63}
+		, 0
+	},
 	/*Default*/
 	{	{0, 0}
 		, {63, 63, 63, 63, 63, 63, 63, 63, 63}
@@ -1251,6 +1267,10 @@ struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 /* For 802.11ax 6G Standard Power mode setting */
 struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 	g_rRlmPowerLimitDefault_SP[] = {
+	{	{'U', 'S'}
+		, {60, 48, 48, 48, 60, 63, 63, 63, 63}
+		, 0
+	},
 	/*Default*/
 	{	{0, 0}
 		, {63, 63, 63, 63, 63, 63, 63, 63, 63}
@@ -2443,8 +2463,927 @@ struct COUNTRY_POWER_LIMIT_TABLE_DEFAULT
 };
 #endif
 
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE
+	g_rRlmPowerLimitConfigurationHE[] = {
+	/*Default*/
+	{	{0, 0}
+		, 36,
+			{64, 64, 64, /* RU26 L,H,U */
+			64, 64, 64,  /* RU52 L,H,U*/
+			64, 64, 64,  /* RU106 L,H,U*/
+			64, 64, 64,  /* RU242 L,H,U*/
+			64, 64, 64,  /* RU484 L,H,U*/
+			64, 64, 64}  /* RU996 L,H,U*/
+	}
+};
 
-static struct COUNTRY_POWER_LIMIT_COUNTRY_CODE g_u2CountryLimitGrp0[] = {0};
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_HE_BW160
+	g_rRlmPowerLimitConfigurationHEBW160[] = {
+	/*Default*/
+	{	{0, 0}
+		, 36,
+			{64, 64, 64, /* RU26 L,H,U */
+			64, 64, 64,  /* RU52 L,H,U*/
+			64, 64, 64,  /* RU106 L,H,U*/
+			64, 64, 64,  /* RU242 L,H,U*/
+			64, 64, 64,  /* RU484 L,H,U*/
+			64, 64, 64,  /* RU996 L,H,U*/
+			64, 64, 64}  /* RU1992 L,H,U*/
+	}
+};
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+/* For EHT 2.4G & 5G setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT
+	g_rRlmPowerLimitConfigurationEHT[] = {
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* EHT26 L,H,U */
+			64, 64, 64,  /* EHT52 L,H,U*/
+			64, 64, 64,  /* EHT106 L,H,U*/
+			64, 64, 64,  /* EHT242 L,H,U*/
+			64, 64, 64,  /* EHT484 L,H,U*/
+			64, 64, 64,  /* EHT996 L,H,U*/
+			64, 64, 64,  /* EHT996X2 L,H,U*/
+			64, 64, 64,  /* EHT26_52 L,H,U*/
+			64, 64, 64,  /* EHT26_106 L,H,U*/
+			64, 64, 64,  /* EHT484_242 L,H,U*/
+			64, 64, 64,  /* EHT996_484 L,H,U*/
+			64, 64, 64}  /* EHT996_484_242 L,H,U*/
+	}
+};
+#endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
+
+#if (CFG_SUPPORT_WIFI_6G == 1)
+/*For 802.11ax 6G Low Power Indoor mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_6E
+	g_rRlmPowerLimitConfiguration6E[] = {
+	{	{'E', 'U'}
+		, 0,
+			{24, 18, 16, /* RU26 L,H,U */
+			24, 18, 16,  /* RU52 L,H,U*/
+			24, 18, 16,  /* RU106 L,H,U*/
+			30, 18, 16,  /* RU242 L,H,U*/
+			28, 18, 16,  /* RU484 L,H,U*/
+			26, 18, 16,  /* RU996 L,H,U*/
+			24, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'K', 'R'}
+		, 0,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			26, 18, 16,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'T', 'W'}
+		, 0,
+			{24, 18, 16, /* RU26 L,H,U */
+			24, 18, 16,  /* RU52 L,H,U*/
+			24, 18, 16,  /* RU106 L,H,U*/
+			30, 18, 16,  /* RU242 L,H,U*/
+			28, 18, 16,  /* RU484 L,H,U*/
+			26, 18, 16,  /* RU996 L,H,U*/
+			24, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'C', 'N'}
+		, 0,
+			{24, 18, 16, /* RU26 L,H,U */
+			24, 18, 16,  /* RU52 L,H,U*/
+			24, 18, 16,  /* RU106 L,H,U*/
+			30, 18, 16,  /* RU242 L,H,U*/
+			28, 18, 16,  /* RU484 L,H,U*/
+			26, 18, 16,  /* RU996 L,H,U*/
+			24, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'U', 'S'}
+		, 0,
+			{0, 0, 0, /* RU26 L,H,U */
+			6, 6, 6,  /* RU52 L,H,U*/
+			12, 12, 12,  /* RU106 L,H,U*/
+			18, 18, 16,  /* RU242 L,H,U*/
+			18, 18, 16,  /* RU484 L,H,U*/
+			18, 18, 16,  /* RU996 L,H,U*/
+			18, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'J', 'P'}
+		, 0,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			12, 12, 12,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 36,
+			{64, 64, 64, /* RU26 L,H,U */
+			64, 64, 64,  /* RU52 L,H,U*/
+			64, 64, 64,  /* RU106 L,H,U*/
+			64, 64, 64,  /* RU242 L,H,U*/
+			64, 64, 64,  /* RU484 L,H,U*/
+			64, 64, 64,  /* RU996 L,H,U*/
+			64, 64, 64}  /* RU1992 L,H,U*/
+	}
+};
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+/*For 802.11ax 6G Very Low Power mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_6E
+	g_rRlmPowerLimitConfiguration6E_VLP[] = {
+	{	{'E', 'U'}
+		, 0,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			20, 18, 16,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'E', 'U'}
+		, 3,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			20, 18, 16,  /* RU242 L,H,U*/
+			15, 15, 15,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'K', 'R'}
+		, 0,
+			{10, 10, 10, /* RU26 L,H,U */
+			16, 16, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			20, 18, 16,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'T', 'W'}
+		, 0,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			20, 18, 16,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'C', 'N'}
+		, 0,
+			{12, 12, 12, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			20, 18, 16,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'U', 'S'}
+		, 0,
+			{18, 18, 16, /* RU26 L,H,U */
+			18, 18, 16,  /* RU52 L,H,U*/
+			18, 18, 16,  /* RU106 L,H,U*/
+			18, 18, 16,  /* RU242 L,H,U*/
+			18, 18, 16,  /* RU484 L,H,U*/
+			18, 18, 16,  /* RU996 L,H,U*/
+			18, 18, 16}  /* RU1992 L,H,U*/
+	},
+	{	{'J', 'P'}
+		, 0,
+			{10, 10, 10, /* RU26 L,H,U */
+			16, 16, 16,  /* RU52 L,H,U*/
+			20, 18, 16,  /* RU106 L,H,U*/
+			12, 12, 12,  /* RU242 L,H,U*/
+			20, 18, 16,  /* RU484 L,H,U*/
+			20, 18, 16,  /* RU996 L,H,U*/
+			20, 18, 16}  /* RU1992 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* RU26 L,H,U */
+			64, 64, 64,  /* RU52 L,H,U*/
+			64, 64, 64,  /* RU106 L,H,U*/
+			64, 64, 64,  /* RU242 L,H,U*/
+			64, 64, 64,  /* RU484 L,H,U*/
+			64, 64, 64,  /* RU996 L,H,U*/
+			64, 64, 64}  /* RU1992 L,H,U*/
+	}
+};
+/*For 802.11ax 6G Standard Power mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_6E
+	g_rRlmPowerLimitConfiguration6E_SP[] = {
+	{	{'U', 'S'}
+		, 0,
+			{0, 0, 0, /* RU26 L,H,U */
+			6, 6, 6,  /* RU52 L,H,U*/
+			12, 12, 12,  /* RU106 L,H,U*/
+			18, 18, 16,  /* RU242 L,H,U*/
+			18, 18, 16,  /* RU484 L,H,U*/
+			18, 18, 16,  /* RU996 L,H,U*/
+			18, 18, 16}  /* RU1992 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* RU26 L,H,U */
+			64, 64, 64,  /* RU52 L,H,U*/
+			64, 64, 64,  /* RU106 L,H,U*/
+			64, 64, 64,  /* RU242 L,H,U*/
+			64, 64, 64,  /* RU484 L,H,U*/
+			64, 64, 64,  /* RU996 L,H,U*/
+			64, 64, 64}  /* RU1992 L,H,U*/
+	}
+};
+#endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
+
+/* For legacy 6G Low Power Indoor mode setting*/
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_6G
+	g_rRlmPowerLimitConfigurationLegacy6G[] = {
+	/*Default*/
+	{	{0, 0}
+		, 36, {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64}
+	}
+};
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+/* For legacy 6G Very Low Power mode setting*/
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_6G
+	g_rRlmPowerLimitConfigurationLegacy6G_VLP[] = {
+	/*Default*/
+	{	{0, 0}
+		, 1, {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64}
+	}
+};
+/* For legacy 6G Standard Power mode setting*/
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_LEGACY_6G
+	g_rRlmPowerLimitConfigurationLegacy6G_SP[] = {
+	/*Default*/
+	{	{0, 0}
+		, 1, {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64}
+	}
+};
+#endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
+
+#if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
+/* For EHT 6G Low Power Indoor mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_6G
+	g_rRlmPowerLimitConfigurationEHT_6G[] = {
+	{	{'K', 'R'}
+		, 0,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			26, 18, 16,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'E', 'U'}
+		, 0,
+			{24, 18, 16, /* EHT26 L,H,U */
+			24, 18, 16,  /* EHT52 L,H,U*/
+			24, 18, 16,  /* EHT106 L,H,U*/
+			30, 18, 16,  /* EHT242 L,H,U*/
+			28, 18, 16,  /* EHT484 L,H,U*/
+			26, 18, 16,  /* EHT996 L,H,U*/
+			24, 18, 16,  /* EHT996X2 L,H,U*/
+			22, 18, 16,  /* EHT996X4 L,H,U*/
+			24, 18, 16,  /* EHT26_52 L,H,U*/
+			24, 18, 16,  /* EHT26_106 L,H,U*/
+			28, 18, 16,  /* EHT484_242 L,H,U*/
+			26, 18, 16,  /* EHT996_484 L,H,U*/
+			26, 18, 16,  /* EHT996_484_242 L,H,U*/
+			24, 18, 16,  /* EHT996X2_484 L,H,U*/
+			24, 18, 16,  /* EHT996X3 L,H,U*/
+			24, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'T', 'W'}
+		, 0,
+			{24, 18, 16, /* EHT26 L,H,U */
+			24, 18, 16,  /* EHT52 L,H,U*/
+			24, 18, 16,  /* EHT106 L,H,U*/
+			30, 18, 16,  /* EHT242 L,H,U*/
+			28, 18, 16,  /* EHT484 L,H,U*/
+			26, 18, 16,  /* EHT996 L,H,U*/
+			24, 18, 16,  /* EHT996X2 L,H,U*/
+			22, 18, 16,  /* EHT996X4 L,H,U*/
+			24, 18, 16,  /* EHT26_52 L,H,U*/
+			24, 18, 16,  /* EHT26_106 L,H,U*/
+			28, 18, 16,  /* EHT484_242 L,H,U*/
+			26, 18, 16,  /* EHT996_484 L,H,U*/
+			26, 18, 16,  /* EHT996_484_242 L,H,U*/
+			24, 18, 16,  /* EHT996X2_484 L,H,U*/
+			24, 18, 16,  /* EHT996X3 L,H,U*/
+			24, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'C', 'N'}
+		, 0,
+			{24, 18, 16, /* EHT26 L,H,U */
+			24, 18, 16,  /* EHT52 L,H,U*/
+			24, 18, 16,  /* EHT106 L,H,U*/
+			30, 18, 16,  /* EHT242 L,H,U*/
+			28, 18, 16,  /* EHT484 L,H,U*/
+			26, 18, 16,  /* EHT996 L,H,U*/
+			24, 18, 16,  /* EHT996X2 L,H,U*/
+			22, 18, 16,  /* EHT996X4 L,H,U*/
+			24, 18, 16,  /* EHT26_52 L,H,U*/
+			24, 18, 16,  /* EHT26_106 L,H,U*/
+			28, 18, 16,  /* EHT484_242 L,H,U*/
+			26, 18, 16,  /* EHT996_484 L,H,U*/
+			26, 18, 16,  /* EHT996_484_242 L,H,U*/
+			24, 18, 16,  /* EHT996X2_484 L,H,U*/
+			24, 18, 16,  /* EHT996X3 L,H,U*/
+			24, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'U', 'S'}
+		, 0,
+			{0, 0, 0, /* EHT26 L,H,U */
+			6, 6, 6,  /* EHT52 L,H,U*/
+			12, 12, 12,  /* EHT106 L,H,U*/
+			18, 18, 16,  /* EHT242 L,H,U*/
+			18, 18, 16,  /* EHT484 L,H,U*/
+			18, 18, 16,  /* EHT996 L,H,U*/
+			18, 18, 16,  /* EHT996X2 L,H,U*/
+			18, 18, 16,  /* EHT996X4 L,H,U*/
+			6, 6, 6,  /* EHT26_52 L,H,U*/
+			12, 12, 12,  /* EHT26_106 L,H,U*/
+			18, 18, 16,  /* EHT484_242 L,H,U*/
+			18, 18, 16,  /* EHT996_484 L,H,U*/
+			18, 18, 16,  /* EHT996_484_242 L,H,U*/
+			18, 18, 16,  /* EHT996X2_484 L,H,U*/
+			18, 18, 16,  /* EHT996X3 L,H,U*/
+			18, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'J', 'P'}
+		, 0,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 18,  /* EHT52 L,H,U*/
+			20, 18, 18,  /* EHT106 L,H,U*/
+			12, 12, 12,  /* EHT242 L,H,U*/
+			20, 18, 18,  /* EHT484 L,H,U*/
+			20, 18, 18,  /* EHT996 L,H,U*/
+			20, 18, 18,  /* EHT996X2 L,H,U*/
+			20, 18, 18,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* EHT26 L,H,U */
+			64, 64, 64,  /* EHT52 L,H,U*/
+			64, 64, 64,  /* EHT106 L,H,U*/
+			64, 64, 64,  /* EHT242 L,H,U*/
+			64, 64, 64,  /* EHT484 L,H,U*/
+			64, 64, 64,  /* EHT996 L,H,U*/
+			64, 64, 64,  /* EHT996X2 L,H,U*/
+			64, 64, 64,  /* EHT996X4 L,H,U*/
+			64, 64, 64,  /* EHT26_52 L,H,U*/
+			64, 64, 64,  /* EHT26_106 L,H,U*/
+			64, 64, 64,  /* EHT484_242 L,H,U*/
+			64, 64, 64,  /* EHT996_484 L,H,U*/
+			64, 64, 64,  /* EHT996_484_242 L,H,U*/
+			64, 64, 64,  /* EHT996X2_484 L,H,U*/
+			64, 64, 64,  /* EHT996X3 L,H,U*/
+			64, 64, 64}  /* EHT996X3_484 L,H,U*/
+	}
+};
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+/* For EHT 6G Very Low Power mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_6G
+	g_rRlmPowerLimitConfigurationEHT_6G_VLP[] = {
+	{	{'E', 'U'}
+		, 0,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			20, 18, 16,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'E', 'U'}
+		, 3,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			20, 18, 16,  /* EHT242 L,H,U*/
+			15, 15, 15,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'K', 'R'}
+		, 0,
+			{10, 10, 10, /* EHT26 L,H,U */
+			16, 16, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			20, 18, 16,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			16, 16, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'T', 'W'}
+		, 0,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			20, 18, 16,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'C', 'N'}
+		, 0,
+			{12, 12, 12, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			20, 18, 16,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'U', 'S'}
+		, 0,
+			{18, 18, 16, /* EHT26 L,H,U */
+			18, 18, 16,  /* EHT52 L,H,U*/
+			18, 18, 16,  /* EHT106 L,H,U*/
+			18, 18, 16,  /* EHT242 L,H,U*/
+			18, 18, 16,  /* EHT484 L,H,U*/
+			18, 18, 16,  /* EHT996 L,H,U*/
+			18, 18, 16,  /* EHT996X2 L,H,U*/
+			18, 18, 16,  /* EHT996X4 L,H,U*/
+			18, 18, 16,  /* EHT26_52 L,H,U*/
+			18, 18, 16,  /* EHT26_106 L,H,U*/
+			18, 18, 16,  /* EHT484_242 L,H,U*/
+			18, 18, 16,  /* EHT996_484 L,H,U*/
+			18, 18, 16,  /* EHT996_484_242 L,H,U*/
+			18, 18, 16,  /* EHT996X2_484 L,H,U*/
+			18, 18, 16,  /* EHT996X3 L,H,U*/
+			18, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	{	{'J', 'P'}
+		, 0,
+			{10, 10, 10, /* EHT26 L,H,U */
+			16, 16, 16,  /* EHT52 L,H,U*/
+			20, 18, 16,  /* EHT106 L,H,U*/
+			12, 12, 12,  /* EHT242 L,H,U*/
+			20, 18, 16,  /* EHT484 L,H,U*/
+			20, 18, 16,  /* EHT996 L,H,U*/
+			20, 18, 16,  /* EHT996X2 L,H,U*/
+			20, 18, 16,  /* EHT996X4 L,H,U*/
+			16, 16, 16,  /* EHT26_52 L,H,U*/
+			20, 18, 16,  /* EHT26_106 L,H,U*/
+			20, 18, 16,  /* EHT484_242 L,H,U*/
+			20, 18, 16,  /* EHT996_484 L,H,U*/
+			20, 18, 16,  /* EHT996_484_242 L,H,U*/
+			20, 18, 16,  /* EHT996X2_484 L,H,U*/
+			20, 18, 16,  /* EHT996X3 L,H,U*/
+			20, 18, 16}  /* EHT996X3_484 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* EHT26 L,H,U */
+			64, 64, 64,  /* EHT52 L,H,U*/
+			64, 64, 64,  /* EHT106 L,H,U*/
+			64, 64, 64,  /* EHT242 L,H,U*/
+			64, 64, 64,  /* EHT484 L,H,U*/
+			64, 64, 64,  /* EHT996 L,H,U*/
+			64, 64, 64,  /* EHT996X2 L,H,U*/
+			64, 64, 64,  /* EHT996X4 L,H,U*/
+			64, 64, 64,  /* EHT26_52 L,H,U*/
+			64, 64, 64,  /* EHT26_106 L,H,U*/
+			64, 64, 64,  /* EHT484_242 L,H,U*/
+			64, 64, 64,  /* EHT996_484 L,H,U*/
+			64, 64, 64,  /* EHT996_484_242 L,H,U*/
+			64, 64, 64,  /* EHT996X2_484 L,H,U*/
+			64, 64, 64,  /* EHT996X3 L,H,U*/
+			64, 64, 64}  /* EHT996X3_484 L,H,U*/
+	}
+};
+/* For EHT 6G Standard Power mode setting */
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION_EHT_6G
+	g_rRlmPowerLimitConfigurationEHT_6G_SP[] = {
+	{	{'U', 'S'}
+		, 0,
+			{0, 0, 0, /* EHT26 L,H,U */
+			6, 6, 6,  /* EHT52 L,H,U*/
+			12, 12, 12,  /* EHT106 L,H,U*/
+			18, 18, 16,  /* EHT242 L,H,U*/
+			18, 18, 16,  /* EHT484 L,H,U*/
+			18, 18, 16,  /* EHT996 L,H,U*/
+			18, 18, 16,  /* EHT996X2 L,H,U*/
+			18, 18, 16,  /* EHT996X4 L,H,U*/
+			64, 64, 64,  /* EHT26_52 L,H,U*/
+			64, 64, 64,  /* EHT26_106 L,H,U*/
+			64, 64, 64,  /* EHT484_242 L,H,U*/
+			64, 64, 64,  /* EHT996_484 L,H,U*/
+			64, 64, 64,  /* EHT996_484_242 L,H,U*/
+			64, 64, 64,  /* EHT996X2_484 L,H,U*/
+			64, 64, 64,  /* EHT996X3 L,H,U*/
+			64, 64, 64}  /* EHT996X3_484 L,H,U*/
+	},
+	/*Default*/
+	{	{0, 0}
+		, 1,
+			{64, 64, 64, /* EHT26 L,H,U */
+			64, 64, 64,  /* EHT52 L,H,U*/
+			64, 64, 64,  /* EHT106 L,H,U*/
+			64, 64, 64,  /* EHT242 L,H,U*/
+			64, 64, 64,  /* EHT484 L,H,U*/
+			64, 64, 64,  /* EHT996 L,H,U*/
+			64, 64, 64,  /* EHT996X2 L,H,U*/
+			64, 64, 64,  /* EHT996X4 L,H,U*/
+			64, 64, 64,  /* EHT26_52 L,H,U*/
+			64, 64, 64,  /* EHT26_106 L,H,U*/
+			64, 64, 64,  /* EHT484_242 L,H,U*/
+			64, 64, 64,  /* EHT996_484 L,H,U*/
+			64, 64, 64,  /* EHT996_484_242 L,H,U*/
+			64, 64, 64,  /* EHT996X2_484 L,H,U*/
+			64, 64, 64,  /* EHT996X3 L,H,U*/
+			64, 64, 64}  /* EHT996X3_484 L,H,U*/
+	}
+};
+#endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE */
+#endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
+#endif /* CFG_SUPPORT_WIFI_6G */
+
+struct COUNTRY_POWER_LIMIT_TABLE_CONFIGURATION
+	g_rRlmPowerLimitConfiguration[] = {
+	{	{'A', 'I'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'A', 'Z'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'B', 'W'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'G', 'D'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'L', 'B'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'L', 'R'}
+		, 144, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'W', 'S'}
+		, 165, {48, 48, 48, 48, 48, 48, 40, 40, 40, 40, 40, 40}
+	}
+	,
+	{	{'U', 'S'}
+		, 1, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 6, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 11, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 3, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 9, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 36, {48, 48, 48, 48, 36, 36, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 40, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 48, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 52, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 60, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 64, {48, 48, 48, 48, 36, 36, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 100, {48, 48, 48, 48, 37, 37, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 116, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 140, {48, 48, 48, 48, 42, 42, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 149, {60, 60, 60, 60, 41, 41, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 157, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 165, {60, 60, 60, 60, 42, 42, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 38, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 46, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 54, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 62, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 102, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 110, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 134, {48, 48, 48, 48, 48, 48, 41, 41, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 151, {60, 60, 60, 60, 60, 60, 36, 36, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 159, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 42, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 58, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 106, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 122, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 155, {60, 60, 60, 60, 60, 60, 60, 60, 36, 36, 60, 60}
+	}
+	,
+	{	{'U', 'S'}
+		, 50, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'U', 'S'}
+		, 114, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 1, {48, 48, 48, 39, 34, 32, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 6, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 11, {39, 39, 39, 39, 33, 32, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 3, {60, 60, 60, 60, 60, 60, 31, 30, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 9, {60, 60, 60, 60, 60, 60, 31, 30, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 36, {48, 48, 48, 48, 36, 36, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 40, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 48, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 52, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 60, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 64, {48, 48, 48, 48, 36, 36, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 100, {48, 48, 48, 48, 37, 37, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 116, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 140, {48, 48, 48, 48, 42, 42, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 149, {60, 60, 60, 60, 41, 41, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 157, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 165, {60, 60, 60, 60, 42, 42, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 38, {48, 48, 48, 48, 48, 48, 27, 27, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 46, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 54, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 62, {48, 48, 48, 48, 48, 48, 28, 28, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 102, {48, 48, 48, 48, 48, 48, 29, 29, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 110, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 134, {48, 48, 48, 48, 48, 48, 41, 41, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 151, {60, 60, 60, 60, 60, 60, 36, 36, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 159, {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 42, {48, 48, 48, 48, 48, 48, 48, 48, 24, 24, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 58, {48, 48, 48, 48, 48, 48, 48, 48, 26, 26, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 106, {48, 48, 48, 48, 48, 48, 48, 48, 25, 25, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 122, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48}
+	}
+	,
+	{	{'T', 'W'}
+		, 155, {60, 60, 60, 60, 60, 60, 60, 60, 36, 36, 60, 60}
+	}
+	,
+	{	{'T', 'W'}
+		, 50, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 24, 24}
+	}
+	,
+	{	{'T', 'W'}
+		, 114, {48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 24, 24}
+	}
+	,
+		/*Default*/
+	{	{0, 0}
+		, 165, {63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63, 63}
+	}
+};
+
+static struct COUNTRY_POWER_LIMIT_COUNTRY_CODE g_u2CountryLimitGrp0[] = {
+		{'G', 'R'}, {'N', 'L'}, {'N', 'O'}, {'D', 'K'}, {'D', 'E'},
+		{'L', 'V'}, {'R', 'O'}, {'L', 'U'}, {'L', 'T'}, {'M', 'O'},
+		{'M', 'T'}, {'B', 'E'}, {'B', 'A'}, {'B', 'G'}, {'R', 'S'},
+		{'S', 'E'}, {'C', 'H'}, {'E', 'S'}, {'S', 'K'}, {'S', 'I'},
+		{'I', 'S'}, {'I', 'E'}, {'A', 'L'}, {'E', 'E'}, {'G', 'B'},
+		{'A', 'T'}, {'I', 'T'}, {'C', 'Z'}, {'H', 'R'}, {'P', 'T'},
+		{'P', 'L'}, {'F', 'R'}, {'F', 'I'}, {'H', 'U'}, {'X', 'K'}
+	};
 
 static struct COUNTRY_POWER_LIMIT_COUNTRY_CODE g_u2CountryLimitGrp1[] = {0};
 
@@ -2454,7 +3393,7 @@ static struct COUNTRY_POWER_LIMIT_COUNTRY_CODE g_u2CountryLimitGrp3[] = {0};
 
 struct COUNTRY_POWER_LIMIT_GROUP_TABLE arSupportCountryPowerLmtGrps[] = {
 	{
-		{'G', '0'},
+		{'E', 'U'},
 		sizeof(g_u2CountryLimitGrp0) /
 			sizeof(struct COUNTRY_POWER_LIMIT_COUNTRY_CODE),
 		g_u2CountryLimitGrp0
@@ -2484,54 +3423,682 @@ struct COUNTRY_POWER_LIMIT_GROUP_TABLE arSupportCountryPowerLmtGrps[] = {
 };
 #endif
 #if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
-#if (CFG_SUPPORT_CE_6G_PWR_REGULATIONS == 1)
+/* Update : 2024/05/03 channel plan v2.8.9 */
 struct COUNTRY_PWR_MODE_6G_SUPPORT_TABLE g_rCountryPwrMode6GSupport[] = {
 	{
-		{'U', 'S'},
+		{'G', 'R'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
 		{
-			/* UNII-5 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-6 */
-			{{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-7 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-8 */
-			{{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}}
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'Z', 'A'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'N', 'L'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'N', 'O'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'N', 'C'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'N', 'Z'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'K', 'R'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'D', 'K'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		},
+	},
+	{
+		{'D', 'E'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'T', 'L'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'L', 'V'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'R', 'U'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'R', 'O'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'L', 'U'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'L', 'T'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'M', 'Y'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'M', 'A'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'M', 'D'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'M', 'T'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'U', 'S'},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'B', 'E'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'B', 'A'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'B', 'G'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'B', 'R'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}
+		}
+	},
+	{
+		{'S', 'A'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'R', 'S'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'S', 'E'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'H'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'E', 'S'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'S', 'K'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'S', 'I'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'S', 'G'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'E'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'R'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'S'},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'I', 'S'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'I', 'E'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'L'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'E', 'E'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'G', 'B'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'U'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'A', 'T'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'W', 'F'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'I', 'L'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'I', 'T'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'J', 'P'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'T', 'W'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'Z'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'L'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
 		}
 	},
 	{
 		{'C', 'A'},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
 		{
-			/* UNII-5 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-6 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-7 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-8 */
-			{{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}}
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'R'},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'K', 'W'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'K'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'H', 'R'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'K', 'I'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'C', 'Y'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'T', 'H'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'T', 'R'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'P', 'E'},
+		{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'P', 'T'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'P', 'L'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'P', 'R'},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'F', 'R'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'F', 'I'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'H', 'U'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'H', 'K'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
+		}
+	},
+	{
+		{'X', 'K'},
+		{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}, /* Ch2 */
+		{
+			{SP_NON_SUPPORT, LPI_SUPPORT, VLP_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT},
+			{SP_NON_SUPPORT, LPI_NON_SUPPORT, VLP_NON_SUPPORT}
 		}
 	},
 	{
 		/* Default */
 		{0, 0},
-		{
-			/* UNII-5 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-6 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-7 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}},
-			/* UNII-8 */
-			{{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}}
-		}
-	}
-};
-#else
-struct COUNTRY_PWR_MODE_6G_SUPPORT_TABLE g_rCountryPwrMode6GSupport[] = {
-	{
-		/* Default */
-		{0, 0},
+		{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* Ch2 */
 		{
 			{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* UNII-5 */
 			{SP_SUPPORT, LPI_SUPPORT, VLP_SUPPORT}, /* UNII-6 */
@@ -2540,7 +4107,6 @@ struct COUNTRY_PWR_MODE_6G_SUPPORT_TABLE g_rCountryPwrMode6GSupport[] = {
 		}
 	}
 };
-#endif /* CFG_SUPPORT_CE_6G_PWR_REGULATIONS */
 #define COUNTRY_PWR_MODE_6G_SUPPORT_TABLE_SIZE \
 		(sizeof(g_rCountryPwrMode6GSupport) \
 			/ sizeof(struct COUNTRY_PWR_MODE_6G_SUPPORT_TABLE))

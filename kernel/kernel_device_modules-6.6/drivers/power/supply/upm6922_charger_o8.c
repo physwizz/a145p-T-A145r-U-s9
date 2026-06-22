@@ -2364,10 +2364,17 @@ static struct charger_ops upm6922_chg_ops = {
     /*A06_V code for SR-AL7160V-01-164 by yexuedong at 20240910 end*/
 };
 
+/*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+extern void usbpd_pm_set_otg_txmode(int enable);
+/*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 static int upm6922_enable_vbus(struct regulator_dev *rdev)
 {
 	int ret;
 	struct upm6922 *upm = rdev_get_drvdata(rdev);
+
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    usbpd_pm_set_otg_txmode(true);
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 
     ret = upm6922_enable_otg(upm);
     pr_err("ret = %d\n", ret);
@@ -2378,7 +2385,11 @@ static int upm6922_enable_vbus(struct regulator_dev *rdev)
 static int upm6922_disable_vbus(struct regulator_dev *rdev)
 {
     int ret;
-	struct upm6922 *upm = rdev_get_drvdata(rdev);
+    struct upm6922 *upm = rdev_get_drvdata(rdev);
+
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    usbpd_pm_set_otg_txmode(false);
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
 
     ret = upm6922_disable_otg(upm);
     pr_err("ret = %d\n", ret);

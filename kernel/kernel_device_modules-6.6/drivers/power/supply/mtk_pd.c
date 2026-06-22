@@ -661,11 +661,17 @@ int __mtk_pdc_get_setting(struct chg_alg_device *alg, int *newvbus, int *newcur,
 	if (pd_min_watt <= 5000000)
 		pd_min_watt = 5000000;
 	/*A06_V code for AL7160AV-31 by xiongxiaoliang at 20240930 start*/
+	/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 start*/
 	if (cap->max_mv[idx] > PD_VOLTAGE_THR &&
 		cap->max_mv[idx] < pd->vbus_h) {
 		*newidx = selected_idx;
 		boost = false;
 		buck = false;
+	} else if (pd->pd_boost_idx > 0 && pd->cap.nr > 0 &&
+		cap->max_mv[idx] == 5000 && cap->ma[idx] > 2000) {
+		*newidx = pd->pd_boost_idx;
+		boost = true;
+		pd_err("[%s]5V PD need boost\n", __func__);
 	} else if ((now_max_watt >= pd_max_watt) || chg1_mivr || chg2_mivr) {
 		*newidx = pd->pd_boost_idx;
 		boost = true;
@@ -677,6 +683,7 @@ int __mtk_pdc_get_setting(struct chg_alg_device *alg, int *newvbus, int *newcur,
 		boost = false;
 		buck = false;
 	}
+	/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 end*/
 	/*A06_V code for AL7160AV-31 by xiongxiaoliang at 20240930 end*/
 
 	*newvbus = cap->max_mv[*newidx];

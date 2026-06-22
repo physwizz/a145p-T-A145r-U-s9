@@ -859,6 +859,36 @@ static long eas_ioctl_impl(struct file *filp,
 			return -1;
 		unset_runnable_boost_enable();
 		break;
+	case EAS_SET_ADAPTIVE_LOW_FREQ_C0:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(0,val,ADAPTIVE_LOW);
+		break;
+	case EAS_SET_ADAPTIVE_HIGH_FREQ_C0:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(0,val,ADAPTIVE_HIGH);
+		break;
+	case EAS_SET_ADAPTIVE_LOW_FREQ_C1:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(1,val,ADAPTIVE_LOW);
+		break;
+	case EAS_SET_ADAPTIVE_HIGH_FREQ_C1:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(1,val,ADAPTIVE_HIGH);
+		break;
+	case EAS_SET_ADAPTIVE_LOW_FREQ_C2:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(2,val,ADAPTIVE_LOW);
+		break;
+	case EAS_SET_ADAPTIVE_HIGH_FREQ_C2:
+		if (easctl_copy_from_user(&val, (void *)arg, sizeof(unsigned int)))
+			return -1;
+		set_adaptive_freq(2,val,ADAPTIVE_HIGH);
+		break;
 	default:
 		pr_debug(TAG "%s %d: unknown cmd %x\n",
 			__FILE__, __LINE__, cmd);

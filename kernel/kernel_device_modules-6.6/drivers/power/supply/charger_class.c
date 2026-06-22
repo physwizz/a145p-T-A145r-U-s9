@@ -782,25 +782,8 @@ int charger_dev_enable_chg_type_det(struct charger_device *chg_dev, bool en)
 	return -EOPNOTSUPP;
 }
 EXPORT_SYMBOL(charger_dev_enable_chg_type_det);
-/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 start*/
-#if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-extern void usbpd_pm_set_otg_txmode(int enable);
-extern void usbpd_pm_get_otg_txmode(int *enable);
-#endif
-/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
 int charger_dev_enable_otg(struct charger_device *chg_dev, bool en)
 {
-	/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 start*/
-	#if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-	int enable = 0;
-	usbpd_pm_get_otg_txmode(&enable);
-	if (enable != en) {
-		enable = en;
-		usbpd_pm_set_otg_txmode(enable);
-	}
-	#endif
-	/*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
-
 	if (chg_dev != NULL && chg_dev->ops != NULL && chg_dev->ops->enable_otg)
 		return chg_dev->ops->enable_otg(chg_dev, en);
 

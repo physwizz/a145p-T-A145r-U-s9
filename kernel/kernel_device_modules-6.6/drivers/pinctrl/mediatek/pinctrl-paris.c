@@ -881,24 +881,34 @@ static void mtk_gpio_set(struct gpio_chip *chip, unsigned int gpio, int value)
 static int mtk_gpio_direction_input(struct gpio_chip *chip, unsigned int gpio)
 {
 	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
+	const struct mtk_pin_desc *desc;
 
 	if (gpio >= hw->soc->npins)
 		return -EINVAL;
 
-	return pinctrl_gpio_direction_input(chip->base + gpio);
+	desc = (const struct mtk_pin_desc *)&hw->soc->pins[gpio];
+
+	/* set input mode */
+	return mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+				       MTK_INPUT);
 }
 
 static int mtk_gpio_direction_output(struct gpio_chip *chip, unsigned int gpio,
 				     int value)
 {
 	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
+	const struct mtk_pin_desc *desc;
 
 	if (gpio >= hw->soc->npins)
 		return -EINVAL;
 
 	mtk_gpio_set(chip, gpio, value);
 
-	return pinctrl_gpio_direction_output(chip->base + gpio);
+	desc = (const struct mtk_pin_desc *)&hw->soc->pins[gpio];
+
+	/* set output mode */
+	return mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+				       MTK_OUTPUT);
 }
 
 static int mtk_gpio_to_irq(struct gpio_chip *chip, unsigned int offset)

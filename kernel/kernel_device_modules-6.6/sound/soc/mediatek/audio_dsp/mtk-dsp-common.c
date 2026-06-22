@@ -57,6 +57,7 @@ static char *dsp_task_name[AUDIO_TASK_DAI_NUM] = {
 	[AUDIO_TASK_DATAPROVIDER_ID] = "dataprovider",
 	[AUDIO_TASK_CALL_FINAL_ID]   = "call_final",
 	[AUDIO_TASK_FAST_ID]         = "fast",
+	[AUDIO_TASK_FAST_MEDIA_ID]   = "fast_media",
 	[AUDIO_TASK_KTV_ID]          = "ktv",
 	[AUDIO_TASK_FM_ADSP_ID]      = "fm",
 	[AUDIO_TASK_UL_PROCESS_ID]   = "ulproc",
@@ -124,6 +125,7 @@ static int dsp_task_scence[AUDIO_TASK_DAI_NUM] = {
 	[AUDIO_TASK_DATAPROVIDER_ID] = TASK_SCENE_DATAPROVIDER,
 	[AUDIO_TASK_CALL_FINAL_ID]  = TASK_SCENE_CALL_FINAL,
 	[AUDIO_TASK_FAST_ID]        = TASK_SCENE_FAST,
+	[AUDIO_TASK_FAST_MEDIA_ID]  = TASK_SCENE_FAST_MEDIA,
 	[AUDIO_TASK_KTV_ID]         = TASK_SCENE_KTV,
 	[AUDIO_TASK_FM_ADSP_ID]     = TASK_SCENE_FM_ADSP,
 	[AUDIO_TASK_UL_PROCESS_ID]  = TASK_SCENE_UL_PROCESS,
@@ -631,11 +633,13 @@ int mtk_dsp_register_feature(int id)
 {
 	return adsp_register_feature(id);
 }
+EXPORT_SYMBOL(mtk_dsp_register_feature);
 
 int mtk_dsp_deregister_feature(int id)
 {
 	return adsp_deregister_feature(id);
 }
+EXPORT_SYMBOL(mtk_dsp_deregister_feature);
 
 int wait_dsp_ready(void)
 {

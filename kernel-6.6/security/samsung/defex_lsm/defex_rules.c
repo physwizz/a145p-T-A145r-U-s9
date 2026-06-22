@@ -476,6 +476,8 @@
 	{feature_immutable_src_exception,"/apex/com.android.runtime/bin/crash_dump64"},	/* DEFAULT */
 	{feature_immutable_src_exception,"/data/local/tests/unrestricted/CtsBionicTestCases/arm64/CtsBionicTestCases"},	/* DEFAULT */
 	{feature_immutable_src_exception,"/data/local/tests/unrestricted/CtsBionicTestCases/arm/CtsBionicTestCases"},	/* DEFAULT */
+	{feature_immutable_tgt_exception,"/system/bin/app_process32"},
+	{feature_immutable_tgt_exception,"/system/bin/app_process64"},
 	{feature_integrity_check,"/vendor/bin/hw/android.hardware.gatekeeper@1.0-service"},
 	{feature_integrity_check,"/vendor/bin/hw/android.hardware.keymaster@4.0-service"},
 	{feature_integrity_check,"/vendor/bin/hw/android.hardware.security.keymint-service"},

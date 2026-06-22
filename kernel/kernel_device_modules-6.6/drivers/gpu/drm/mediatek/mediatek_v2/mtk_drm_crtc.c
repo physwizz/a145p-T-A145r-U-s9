@@ -3177,6 +3177,7 @@ int mtk_drm_crtc_set_panel_hbm(struct drm_crtc *crtc, bool en)
 	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
 	struct mtk_ddp_comp *comp = mtk_ddp_comp_request_output(mtk_crtc);
 	struct cmdq_pkt *cmdq_handle;
+	struct cmdq_pkt *cmdq_handle2;
 	struct cmdq_client *client;
 	bool is_frame_mode;
 	bool state = false;
@@ -3210,26 +3211,58 @@ int mtk_drm_crtc_set_panel_hbm(struct drm_crtc *crtc, bool en)
 		return -EINVAL;
 	}
 
-	mtk_crtc_wait_frame_done(mtk_crtc, cmdq_handle, DDP_FIRST_PATH, 0);
+	//mtk_crtc_wait_frame_done(mtk_crtc, cmdq_handle, DDP_FIRST_PATH, 0);
 
 	if (is_frame_mode) {
+		/* 1. wait frame done & wait DSI not busy */
+		cmdq_pkt_wait_no_clear(cmdq_handle,
+			mtk_crtc->gce_obj.event[EVENT_STREAM_EOF]);
+		/* Clear stream block to prevent trigger loop start */
 		cmdq_pkt_clear_event(cmdq_handle,
-				mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
+			mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
 		cmdq_pkt_wfe(cmdq_handle,
-				mtk_crtc->gce_obj.event[EVENT_CABC_EOF]);
-	}
-
-	comp->funcs->io_cmd(comp, cmdq_handle, DSI_HBM_SET, &en);
-
-	if (is_frame_mode) {
-		cmdq_pkt_set_event(cmdq_handle,
-				mtk_crtc->gce_obj.event[EVENT_CABC_EOF]);
-		cmdq_pkt_set_event(cmdq_handle,
-				mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
+			mtk_crtc->gce_obj.event[EVENT_CABC_EOF]);
+		cmdq_pkt_clear_event(cmdq_handle,
+			mtk_crtc->gce_obj.event[EVENT_STREAM_DIRTY]);
+		cmdq_pkt_wfe(cmdq_handle,
+			mtk_crtc->gce_obj.event[EVENT_STREAM_EOF]);
+	} else {
+		cmdq_pkt_wfe(cmdq_handle,
+			mtk_crtc->gce_obj.event[EVENT_CMD_EOF]);
 	}
 
 	cmdq_pkt_flush(cmdq_handle);
 	cmdq_pkt_destroy(cmdq_handle);
+
+	comp->funcs->io_cmd(comp, NULL, DSI_HBM_SET, &en);
+
+	if (mtk_crtc_with_trigger_loop(crtc) && mtk_crtc_with_event_loop(crtc)) {
+		mtk_crtc_stop_trig_loop(crtc);
+		mtk_crtc_stop_event_loop(crtc);
+
+		mtk_crtc_skip_merge_trigger(mtk_crtc);
+
+		mtk_crtc_start_event_loop(crtc);
+		mtk_crtc_start_trig_loop(crtc);
+	}
+
+	if (is_frame_mode) {
+		mtk_crtc_pkt_create(&cmdq_handle2, &mtk_crtc->base,
+			mtk_crtc->gce_obj.client[CLIENT_CFG]);
+		if (!cmdq_handle2) {
+			DDPPR_ERR("%s:%d NULL cmdq handle\n", __func__, __LINE__);
+			return -EINVAL;
+		}
+		cmdq_pkt_set_event(cmdq_handle2,
+			mtk_crtc->gce_obj.event[EVENT_CABC_EOF]);
+		cmdq_pkt_set_event(cmdq_handle2,
+			mtk_crtc->gce_obj.event[EVENT_STREAM_EOF]);
+		cmdq_pkt_set_event(cmdq_handle2,
+			mtk_crtc->gce_obj.event[EVENT_STREAM_BLOCK]);
+		cmdq_pkt_flush(cmdq_handle2);
+		cmdq_pkt_destroy(cmdq_handle2);
+	}
+
 
 	return 0;
 }
@@ -4736,6 +4769,7 @@ _mtk_crtc_wb_addon_module_connect(
 	struct total_tile_overhead to_info;
 	enum addon_scenario scn;
 	struct mtk_drm_private *priv = crtc->dev->dev_private;
+	int event;
 
 	if (index != 0 || mtk_crtc_is_dc_mode(crtc) ||
 		!state->prop_val[CRTC_PROP_OUTPUT_ENABLE])
@@ -4828,6 +4862,9 @@ _mtk_crtc_wb_addon_module_connect(
 			DDPMSG("S+/PL12/e1/id%d/mva0x%08llx/size0x%08lx/sec%d\n",
 				(unsigned int)state->prop_val[CRTC_PROP_OUTPUT_FENCE_IDX],
 				mtk_fb_get_dma(fb), mtk_fb_get_size(fb), mtk_drm_fb_is_secure(fb));
+			//clear wdma frame done
+			event = mtk_crtc_wb_addon_get_event(crtc);
+			cmdq_pkt_clear_event(cmdq_handle, event);
 
 			if (mtk_crtc->is_dual_pipe) {
 				int src_w = 0, dst_w = 0;
@@ -6107,11 +6144,12 @@ void mtk_disp_set_module_hrt(struct mtk_drm_crtc *mtk_crtc, unsigned int bw_base
 			continue;
 
 		if ((priv->data->mmsys_id == MMSYS_MT6991) &&
-				(mtk_crtc_state->lye_state.rpo_lye || pre_rpo_lye)) {
+			(mtk_crtc_state->lye_state.rpo_lye || pre_rpo_lye)) {
 			mtk_ddp_comp_io_cmd(priv->ddp_comp[DDP_COMPONENT_OVL_EXDMA2],
 				handle, event, &bw_base);
 		}
-		pre_rpo_lye = mtk_crtc_state->lye_state.rpo_lye;
+		if (event == PMQOS_SET_HRT_BW_DELAY_POST)
+			pre_rpo_lye = mtk_crtc_state->lye_state.rpo_lye;
 
 		for_each_comp_in_crtc_target_path(comp, mtk_crtc, j, i) {
 			mtk_ddp_comp_io_cmd(comp, handle, event,
@@ -6345,6 +6383,7 @@ static void mtk_crtc_update_hrt_state(struct drm_crtc *crtc,
 static void copy_drm_disp_mode(struct drm_display_mode *src,
 	struct drm_display_mode *dst)
 {
+	memcpy(dst->name, src->name, DRM_DISPLAY_MODE_LEN);
 	dst->clock       = src->clock;
 	dst->hdisplay    = src->hdisplay;
 	dst->hsync_start = src->hsync_start;
@@ -6354,6 +6393,7 @@ static void copy_drm_disp_mode(struct drm_display_mode *src,
 	dst->vsync_start = src->vsync_start;
 	dst->vsync_end   = src->vsync_end;
 	dst->vtotal      = src->vtotal;
+	dst->vscan       = src->vscan;
 }
 
 struct golden_setting_context *
@@ -7273,13 +7313,9 @@ static void mtk_crtc_frame_buffer_release(struct drm_crtc *crtc,
 
 	mtk_crtc = to_mtk_crtc(crtc);
 	if (priv->data->mmsys_id == MMSYS_MT6768 ||
-		priv->data->mmsys_id == MMSYS_MT6877 ||
-		priv->data->mmsys_id == MMSYS_MT6781 ||
 		priv->data->mmsys_id == MMSYS_MT6885 ||
-		priv->data->mmsys_id == MMSYS_MT6833 ||
 		priv->data->mmsys_id == MMSYS_MT6765 ||
-		priv->data->mmsys_id == MMSYS_MT6761 ||
-		priv->data->mmsys_id == MMSYS_MT6853) {
+		priv->data->mmsys_id == MMSYS_MT6761) {
 		DDPINFO("To do workaround:%s():%d\n", __func__, __LINE__);
 		return;
 	}
@@ -10454,12 +10490,9 @@ void mtk_crtc_start_event_loop(struct drm_crtc *crtc)
 		}
 	}
 
-	if (mtk_crtc->panel_ext && mtk_crtc->panel_ext->params
-		&& mtk_crtc->panel_ext->params->dyn_fps.vact_timing_fps != 0) {
-		cur_fps = mtk_crtc->panel_ext->params->dyn_fps.vact_timing_fps;
-	} else if (crtc && crtc->state) {
+	if (crtc && crtc->state)
 		cur_fps = drm_mode_vrefresh(&crtc->state->mode);
-	}
+
 	if (cur_fps)
 		frame_time = 1000000 / cur_fps;
 	DDPINFO("%s: cur_fps:%d, frame_time:%d\n", __func__, cur_fps, frame_time);
@@ -12316,6 +12349,11 @@ void mtk_crtc_set_dirty(struct mtk_drm_crtc *mtk_crtc)
 		return;
 	}
 
+	if (mtk_crtc->cust_skip_frame) {
+		pr_info("%s : cust_skip_frame!\n", __func__);
+		return;
+	}
+
 	cb_data = kmalloc(sizeof(*cb_data), GFP_KERNEL);
 	if (!cb_data) {
 		DDPINFO("%s:%d, cb data creation failed\n",
@@ -14085,6 +14123,7 @@ void mtk_drm_crtc_atomic_resume(struct drm_crtc *crtc,
 			priv->vds_path_enable = 1;
 		}
 	}
+	mtk_crtc->config_cnt = 0;
 
 	/* All MTCMOS ref cnt has been get in mtk_vdisp probe earlier,
 	 * after display actually get its MTCMOS, the ref cnt should be put.
@@ -17873,6 +17912,7 @@ int mtk_crtc_gce_flush(struct drm_crtc *crtc, void *gce_cb,
 	}
 
 	mtk_crtc->skip_frame = false;
+	mtk_crtc->config_cnt = 1;
 
 #ifndef CUSTOMER_USE_SIMPLE_API
 	if (atomic_read(&mtk_crtc->singal_for_mode_switch)) {
