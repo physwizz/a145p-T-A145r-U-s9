@@ -585,7 +585,7 @@ static ssize_t pm_store(
 	if (i4Ret)
 		DBGLOG(INIT, ERROR, "sscanf pm fail u4Ret=%d\n", i4Ret);
 	else {
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"Set PM to %d.\n",
 			g_i4PM);
 
@@ -626,7 +626,7 @@ static ssize_t macaddr_store(
 	if (!i4Ret)
 		DBGLOG(INIT, ERROR, "sscanf mac format fail u4Ret=%d\n", i4Ret);
 	else {
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"Set macaddr to %s.\n",
 			aucMacAddrOverride);
 	}
@@ -677,7 +677,7 @@ static ssize_t memdump_store(
 	if (i4Ret)
 		DBGLOG(INIT, ERROR, "sscanf memdump fail u4Ret=%d\n", i4Ret);
 	else {
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"Set memdump to %d.\n",
 			g_u4Memdump);
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
@@ -738,7 +738,7 @@ static ssize_t ant_store(
 	if (i4Ret)
 		DBGLOG(INIT, ERROR, "sscanf ant fail u4Ret=%d\n", i4Ret);
 	else {
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"Set ANT to %d.\n",
 			g_i4Ant);
 	}
@@ -753,7 +753,7 @@ static unsigned int fw_log_wifi_WtF_poll(struct file *filp, poll_table *wait)
 
 	poll_wait(filp, &prWtFInf->wq, wait);
 	if (prWtFInf->fgIsAllowFWLogDump) {
-		DBGLOG_LIMITED(INIT, DEBUG, "Write FW log to file!");
+		DBGLOG_LIMITED(INIT, INFO, "Write FW log to file!");
 		return POLLIN|POLLRDNORM;
 	}
 	return 0;
@@ -919,11 +919,11 @@ static ssize_t hdmwifi_store(
 	else {
 		switch (i4Value) {
 		case 0:
-			DBGLOG(INIT, DEBUG, "g_hdm_wlan_loader=0(Lock)\n");
+			DBGLOG(INIT, INFO, "g_hdm_wlan_loader=0(Lock)\n");
 			g_hdm_wlan_loader = 0;
 			break;
 		case 1:
-			DBGLOG(INIT, DEBUG, "g_hdm_wlan_loader=1(Unlock)\n");
+			DBGLOG(INIT, INFO, "g_hdm_wlan_loader=1(Unlock)\n");
 			g_hdm_wlan_loader = 1;
 			break;
 		default:
@@ -966,8 +966,8 @@ void cable_detect_gpio_parse(void)
 		g_i4SubCableDetectGpio = -1;
 	}
 
-	DBGLOG(INIT, DEBUG, "Main gpio_num is %d\n", g_i4MainCableDetectGpio);
-	DBGLOG(INIT, DEBUG, "Sub  gpio_num is %d\n", g_i4SubCableDetectGpio);
+	DBGLOG(INIT, INFO, "Main gpio_num is %d\n", g_i4MainCableDetectGpio);
+	DBGLOG(INIT, INFO, "Sub  gpio_num is %d\n", g_i4SubCableDetectGpio);
 
 	return;
 
@@ -1005,13 +1005,11 @@ static ssize_t wificable_show(
 {
 	/*read GPIO Main status*/
 	aucMainCableDetectStatus = cable_detect_gpio_read_main();
-	DBGLOG(INIT, DEBUG,
-	       "aucMainCableDetectStatus %d\n", aucMainCableDetectStatus);
+	DBGLOG(INIT, INFO, "aucMainCableDetectStatus %d\n", aucMainCableDetectStatus);
 
 	/*read GPIO Sub status*/
 	aucSubCableDetectStatus = cable_detect_gpio_read_sub();
-	DBGLOG(INIT, DEBUG,
-	       "aucSubCableDetectStatus %d\n", aucSubCableDetectStatus);
+	DBGLOG(INIT, INFO, "aucSubCableDetectStatus %d\n", aucSubCableDetectStatus);
 
 	switch (aucMainCableDetectStatus) {
 	case CABLE_STATUS_PLUG_IN:
@@ -1455,17 +1453,17 @@ void HdmWifi_SysfsInit(void)
 	int32_t i4Ret = 0;
 
 	if (g_fgHdmSysfsCreated) {
-		DBGLOG(INIT, INFO, "hdm_wlan_loader existed already\n");
+		DBGLOG(INIT, VOC, "hdm_wlan_loader existed already\n");
 		return;
 	}
 
 	i4Ret = sysfs_create_file(kernel_kobj, &hdmwifi_attr.attr);
 	if (i4Ret) {
-		DBGLOG(INIT, INFO,
+		DBGLOG(INIT, VOC,
 			"Unable to create hdm_wlan_loader\n");
 	}
 	else {
-		DBGLOG(INIT, INFO, "Created hdm_wlan_loader\n");
+		DBGLOG(INIT, VOC, "Created hdm_wlan_loader\n");
 		g_fgHdmSysfsCreated = TRUE;
 	}
 }
@@ -1475,10 +1473,10 @@ void HdmWifi_SysfsUninit(void)
 	if (g_fgHdmSysfsCreated) {
 		sysfs_remove_file(kernel_kobj, &hdmwifi_attr.attr);
 		g_fgHdmSysfsCreated = FALSE;
-		DBGLOG(INIT, INFO, "Removed hdm_wlan_loader\n");
+		DBGLOG(INIT, VOC, "Removed hdm_wlan_loader\n");
 	}
 	else
-		DBGLOG(INIT, INFO, "No hdm_wlan_loader\n");
+		DBGLOG(INIT, VOC, "No hdm_wlan_loader\n");
 }
 #endif
 
@@ -1662,7 +1660,7 @@ u_int8_t sysIsStdplusEnable(void)
 	uint32_t u4ConfigReadLen = 0;
 	void *pvDev = NULL;
 
-	kalGetDev(&pvDev);
+	kalGetPlatDev(&pvDev);
 	if (pvDev == NULL) {
 		DBGLOG(INIT, WARN, "glGetPlatDev failed\n");
 		//return FALSE;
@@ -1672,7 +1670,7 @@ u_int8_t sysIsStdplusEnable(void)
 	    &u4ConfigReadLen,
 	    TRUE,
 	    pvDev) == 0) {
-		DBGLOG(INIT, DEBUG, "[Feature] Disable STD+\n");
+		DBGLOG(INIT, INFO, "[Feature] Disable STD+\n");
 		if (pucConfigBuf)
 			kalMemFree(pucConfigBuf, VIR_MEM_TYPE, u4ConfigReadLen);
 		return FALSE;
@@ -1707,14 +1705,14 @@ void sysCreateFeature(void)
 	u_int8_t	ucOffset = 0;
 	struct FS_SW_ILD_T *prSwFsTbl;
 
-	TRACE_FUNC(INIT, DEBUG, "[%s]\n");
+	DBGLOG(INIT, INFO, "[%s]\n", __func__);
 
 	kalMemZero(acFeatureInfo, sizeof(acFeatureInfo));
 
 	ucOffset = 0;
 
 #if defined(CFG_FS_WIFI6E_MIMO)
-	DBGLOG(INIT, DEBUG, "[Feature] CFG_FS_WIFI6E_MIMO\n");
+	DBGLOG(INIT, INFO, "[Feature] CFG_FS_WIFI6E_MIMO\n");
 	/* WIFI6E & MIMO */
 	fs_hw_feature =
 	(glIsWiFi7CfgFile() ? FS_HW_STANDARD_WIFI7 : FS_HW_STANDARD_WIFI6E)
@@ -1722,20 +1720,20 @@ void sysCreateFeature(void)
 	| FS_HW_CONCURRENCY_MODE_ONE << FS_HW_CONCURRENCY_MODE_OFFSET
 	| FS_HW_NUM_ANT_MIMO << FS_HW_NUM_ANT_OFFSET;
 #elif defined(CFG_FS_WIFI6_MIMO)
-	DBGLOG(INIT, DEBUG, "[Feature] CFG_FS_WIFI6_MIMO\n");
+	DBGLOG(INIT, INFO, "[Feature] CFG_FS_WIFI6_MIMO\n");
 	/* WIFI6 & MIMO */
 	fs_hw_feature =   FS_HW_STANDARD_WIFI6
 	| FS_HW_NUM_CORES_ONE << FS_HW_NUM_CORES_OFFSET
 	| FS_HW_CONCURRENCY_MODE_ONE << FS_HW_CONCURRENCY_MODE_OFFSET
 	| FS_HW_NUM_ANT_MIMO << FS_HW_NUM_ANT_OFFSET;
 #elif defined(CFG_FS_WIFI5_MIMO)
-	DBGLOG(INIT, DEBUG, "[Feature] CFG_FS_WIFI5_MIMO\n");
+	DBGLOG(INIT, INFO, "[Feature] CFG_FS_WIFI5_MIMO\n");
 	/* WIFI5 & MIMO */
 	fs_hw_feature = FS_HW_STANDARD_WIFI5
 	| FS_HW_NUM_CORES_ONE << FS_HW_NUM_CORES_OFFSET
 	| FS_HW_NUM_ANT_MIMO << FS_HW_NUM_ANT_OFFSET;
 #else
-	DBGLOG(INIT, DEBUG, "[Feature] CFG_FS_WIFI5_SISO\n");
+	DBGLOG(INIT, INFO, "[Feature] CFG_FS_WIFI5_SISO\n");
 	/* WIFI5 & SISO */
 	fs_hw_feature =   FS_HW_STANDARD_WIFI5
 	| FS_HW_NUM_CORES_ONE << FS_HW_NUM_CORES_OFFSET
@@ -1803,7 +1801,7 @@ void sysCreateFeature(void)
 		}
 	}
 
-	DBGLOG(INIT, DEBUG, "[%s] Feature Set\n", acFeatureInfo);
+	DBGLOG(INIT, INFO, "[%s] Feature Set\n", acFeatureInfo);
 
 }
 
@@ -1814,7 +1812,7 @@ void sysInitFeature(void)
 	uint8_t *pucWifi7CfgBuf = NULL;
 	uint32_t u4Wifi7CfgReadLen = 0;
 
-	TRACE_FUNC(INIT, DEBUG, "[%s]\n");
+	DBGLOG(INIT, INFO, "[%s]\n", __func__);
 
 	if (!wifi_kobj) {
 		DBGLOG(INIT, ERROR, "wifi_kobj is null\n");
@@ -1826,20 +1824,20 @@ void sysInitFeature(void)
 		DBGLOG(INIT, ERROR,
 			"Unable to create feature_attr entry\n");
 
-	kalGetDev(&pvDev);
+	kalGetPlatDev(&pvDev);
 	if (pvDev == NULL) {
 		DBGLOG(INIT, ERROR, "kalGetPlatDev failed\n");
 	}
 
 	if (kalRequestFirmware("wifi7.cfg", &pucWifi7CfgBuf,
 	    &u4Wifi7CfgReadLen, TRUE, pvDev) == 0) {
-		DBGLOG(INIT, DEBUG, "wifi7.cfg file exists");
+		DBGLOG(INIT, INFO, "wifi7.cfg file exists");
 		g_IsWifi7CfgFile = TRUE;
 		kalMemFree(pucWifi7CfgBuf, VIR_MEM_TYPE,
 			u4Wifi7CfgReadLen);
 	}
 	else {
-		DBGLOG(INIT, DEBUG, "wifi7.cfg file doesn't exists");
+		DBGLOG(INIT, INFO, "wifi7.cfg file doesn't exists");
 		g_IsWifi7CfgFile = FALSE;
 	}
 
@@ -1849,7 +1847,7 @@ void sysInitFeature(void)
 void sysUninitFeature(void)
 {
 
-	TRACE_FUNC(INIT, DEBUG, "[%s]\n");
+	DBGLOG(INIT, INFO, "[%s]\n", __func__);
 
 	if (!wifi_kobj) {
 		DBGLOG(INIT, ERROR, "wifi_kobj is null\n");
@@ -1892,7 +1890,7 @@ static ssize_t nan_store(
 
 	kalMemCopy(acNanInfo, buf, count);
 
-	DBGLOG(INIT, DEBUG, "Hex: %s\n", acNanInfo);
+	DBGLOG(INIT, INFO, "Hex: %s\n", acNanInfo);
 
 	wlanHexStrToByteArray(acNanInfo, acNanBytes, count);
 
@@ -1920,6 +1918,7 @@ static ssize_t nan_store(
 		(wlanGetNetDev(g_prGlueInfo, NAN_DEFAULT_INDEX))->ieee80211_ptr,
 		&extCmd, sizeof(struct NanExtCmdMsg));
 #endif
+
 	return count;
 }
 
@@ -1930,7 +1929,7 @@ void sysInitNan(void)
 {
 	int32_t fsRet = 0;
 
-	TRACE_FUNC(INIT, DEBUG, "Enter %s\n");
+	DBGLOG(INIT, INFO, "Enter %s\n", __func__);
 
 	if (!wifi_kobj) {
 		DBGLOG(INIT, ERROR, "wifi_kobj is null\n");
@@ -1946,7 +1945,7 @@ void sysInitNan(void)
 void sysUninitNan(void)
 {
 
-	TRACE_FUNC(INIT, DEBUG, "Enter %s\n");
+	DBGLOG(INIT, INFO, "Enter %s\n", __func__);
 
 	if (!wifi_kobj) {
 		DBGLOG(INIT, ERROR, "wifi_kobj is null\n");
@@ -1959,7 +1958,7 @@ void sysUninitNan(void)
 
 int32_t sysCreateFsEntry(struct GLUE_INFO *prGlueInfo)
 {
-	TRACE_FUNC(INIT, DEBUG, "[%s]\n");
+	DBGLOG(INIT, INFO, "[%s]\n", __func__);
 
 	g_prGlueInfo = prGlueInfo;
 
@@ -2050,6 +2049,11 @@ static void glWlanGetTraces(uint8_t *pucTraces, uint32_t u4MaxLen)
 
 	kalMemZero(pucTraces, u4MaxLen);
 
+	if (glGetRstReason() == RST_FW_ASSERT) {
+		coredump_get_dump_buff(pucTraces, u4MaxLen);
+		return;
+	}
+
 #if CONFIG_STACKTRACE
 #if KERNEL_VERSION(5, 10, 0) > CFG80211_VERSION_CODE
 	trace.nr_entries = 0;
@@ -2065,10 +2069,10 @@ static void glWlanGetTraces(uint8_t *pucTraces, uint32_t u4MaxLen)
 	for (i = 0; i < u4EntryNum; i++) {
 		u4Offset += kalScnprintf(pucTraces + u4Offset,
 			u4MaxLen - u4Offset,
-			"%p\n", au4Stacks[i]);
+			"%ps\n", au4Stacks[i]);
 	}
 #else
-	DBGLOG(INIT, DEBUG, "Kernel stack trace not support\n");
+	DBGLOG(INIT, INFO, "Kernel stack trace not support\n");
 #endif
 }
 
@@ -2082,7 +2086,7 @@ glGetRstInfo(uint32_t *pu4Reason, uint8_t *pcData,
 	if (u4RstReason <= 0 || u4RstReason >= RST_REASON_MAX)
 		u4RstReason = 0;
 
-	DBGLOG(INIT, DEBUG, "eResetReason=%u (%s), len %lu\n",
+	DBGLOG(INIT, INFO, "eResetReason=%u (%s), len %lu\n",
 		u4RstReason,
 		apucRstReason[u4RstReason],
 		kalStrLen(apucRstReason[u4RstReason]));
@@ -2141,7 +2145,7 @@ glNotifyChipReset(uint32_t u4Reason, uint8_t *pcData,
 
 	char cid[] = "MT6631";
 
-	TRACE_FUNC(INIT, DEBUG, "%s start\n");
+	DBGLOG(INIT, INFO, "glNotifyChipReset start\n");
 
 	WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
 	if (prGlueInfo == NULL || !prGlueInfo->u4ReadyFlag ||
@@ -2197,34 +2201,34 @@ glNotifyChipReset(uint32_t u4Reason, uint8_t *pcData,
 		kalStrnCpy(list->fwVer, "Invalid_Version", 15);
 	}
 
-	DBGLOG(INIT, DEBUG, "fwVer=%s, full=%s\n", list->fwVer, pucFwVer);
+	DBGLOG(INIT, INFO, "fwVer=%s, full=%s\n", list->fwVer, pucFwVer);
 
 	kalStrnCpy(list->driverVer, aucDriverVersionStr,
 		sizeof(list->driverVer) - 1);
 
-	DBGLOG(INIT, DEBUG, "driverVer=%s\n", list->driverVer);
+	DBGLOG(INIT, INFO, "driverVer=%s\n", list->driverVer);
 
 	kalStrnCpy(list->cidInfo, cid,
 		sizeof(list->cidInfo) - 1);
 
-	DBGLOG(INIT, DEBUG, "cidInfo=%s\n", list->cidInfo);
+	DBGLOG(INIT, INFO, "cidInfo=%s\n", list->cidInfo);
 
 	list->hangType = u4Reason;
 
-	DBGLOG(INIT, DEBUG, "hangType=%d\n", list->hangType);
+	DBGLOG(INIT, INFO, "hangType=%d\n", list->hangType);
 
 	kalMemCopy(list->rawData, pcData, u4DataLen);
 
-	DBGLOG(INIT, DEBUG, "Dump=\n%s\n", list->rawData);
+	DBGLOG(INIT, INFO, "Dump=\n%s\n", list->rawData);
 
 	mtk_cfg80211_vendor_event_generic_response(
 		wiphy, wdev, size, (uint8_t *)list);
 	kalMemFree(list, VIR_MEM_TYPE, size);
 
-	TRACE_FUNC(INIT, DEBUG, "%s end\n");
+	DBGLOG(INIT, INFO, "glNotifyChipReset end\n");
 }
 
-void sysResetTrigger(void)
+void sysResetRecordDetail(void)
 {
 	if (g_u4Memdump) {
 		if (g_pucTraces == NULL)
@@ -2236,12 +2240,12 @@ void sysResetTrigger(void)
 		else
 			DBGLOG(INIT, ERROR, "Alloc mem failed.\n");
 	} else {
-		DBGLOG(INIT, DEBUG, "Skip reset report. Memdump=%u\n",
+		DBGLOG(INIT, INFO, "Skip reset report. Memdump=%u\n",
 			g_u4Memdump);
 	}
 }
 
-void sysResetRecoveryReport(void)
+void sysHangRecoveryReport(void)
 {
 	uint32_t u4Reason = 0;
 	uint8_t acData[512] = {0};
@@ -2254,7 +2258,7 @@ void sysResetRecoveryReport(void)
 	}
 }
 
-void sysResetTriggerCollectLogs(void)
+void sysHangTriggerCollectLogs(void)
 {
 	if (g_u4Memdump == 3) {
 		/* Ensure the coredump file saved when the previous coredump
@@ -2401,19 +2405,6 @@ void sysGetExtCfg(struct ADAPTER *prAdapter)
 	struct WIFI_VAR *prWifiVar = NULL;
 	uint32_t u4MinValue = 0, u4MaxValue = 0;
 	int32_t  i4MinValue = 0, i4MaxValue = 0;
-#endif
-
-#ifdef CFG_MTK_WIFI_SOC_S5E9925_SUPPORT
-	if (!prAdapter)
-		return;
-
-	prAdapter->rWifiVar.u4PerfMonTpTh[3] = 120;
-	prAdapter->rWifiVar.u4PerfMonTpTh[4] = 160;
-	prAdapter->rWifiVar.u4PerfMonTpTh[5] = 200;
-	prAdapter->rWifiVar.u4PerfMonTpTh[6] = 450;
-	prAdapter->rWifiVar.u4PerfMonTpTh[7] = 800;
-	prAdapter->rWifiVar.u4PerfMonTpTh[8] = 1200;
-	prAdapter->rWifiVar.u4PerfMonTpTh[9] = 2400;
 #endif
 
 #if (CFG_EXT_ROAMING == 1)
@@ -2735,7 +2726,7 @@ void iniFileErrorCheck (struct ADAPTER *prAdapter, uint8_t **ppucIniBuf,
 	uint32_t ret;
 
 	if (prAdapter == NULL) {
-		DBGLOG(INIT, DEBUG, "\nprAdapter is NULL");
+		DBGLOG(INIT, INFO, "\nprAdapter is NULL");
 		return;
 	}
 
@@ -2743,13 +2734,13 @@ void iniFileErrorCheck (struct ADAPTER *prAdapter, uint8_t **ppucIniBuf,
 
 	if (kalRequestFirmware("wlan-connection-roaming.ini", ppucIniBuf,
 		   pu4ReadSize, TRUE, prAdapter->prGlueInfo->prDev) == 0) {
-		DBGLOG(INIT, DEBUG, "Read wlan-connection-roaming.ini\n");
+		DBGLOG(INIT, INFO, "Read wlan-connection-roaming.ini\n");
 		pucTempBuf = kalMemZAlloc(*pu4ReadSize, VIR_MEM_TYPE);
 		if (pucTempBuf) {
 			kalMemCopy(pucTempBuf, *ppucIniBuf, *pu4ReadSize);
 			ret = iniFileParsing (pucTempBuf, total_table_num);
 			if (ret == WLAN_STATUS_FAILURE) {
-				DBGLOG(INIT, DEBUG, "ini parsing error");
+				DBGLOG(INIT, INFO, "ini parsing error");
 				kalMemFree(*ppucIniBuf, VIR_MEM_TYPE, *pu4ReadSize);
 				*pu4ReadSize = 0;
 				*ppucIniBuf = NULL;
@@ -2761,22 +2752,20 @@ void iniFileErrorCheck (struct ADAPTER *prAdapter, uint8_t **ppucIniBuf,
 			DBGLOG(INIT, WARN, "alloc pucTempBuf fail");
 	}
 	else {
-		DBGLOG(INIT, DEBUG, "No wlan-connection-roaming.ini\n");
+		DBGLOG(INIT, INFO, "No wlan-connection-roaming.ini\n");
 		fgNeedBackupIni = TRUE;
 	}
 
 	if (fgNeedBackupIni) {
 		if (kalRequestFirmware("wlan-connection-roaming-backup.ini",
 			ppucIniBuf, pu4ReadSize, TRUE, prAdapter->prGlueInfo->prDev) == 0) {
-			DBGLOG(INIT, DEBUG,
-			       "Read wlan-connection-roaming-backup.ini\n");
+			DBGLOG(INIT, INFO, "Read wlan-connection-roaming-backup.ini\n");
 			pucTempBuf = kalMemZAlloc(*pu4ReadSize, VIR_MEM_TYPE);
 			if (pucTempBuf) {
 				kalMemCopy(pucTempBuf, *ppucIniBuf, *pu4ReadSize);
 				ret = iniFileParsing (pucTempBuf, total_table_num);
 				if (ret == WLAN_STATUS_FAILURE) {
-					DBGLOG(INIT, DEBUG,
-					       "backup ini parsing error");
+					DBGLOG(INIT, INFO, "backup ini parsing error");
 					kalMemFree(*ppucIniBuf, VIR_MEM_TYPE, *pu4ReadSize);
 					*pu4ReadSize = 0;
 					*ppucIniBuf = NULL;
@@ -2787,8 +2776,7 @@ void iniFileErrorCheck (struct ADAPTER *prAdapter, uint8_t **ppucIniBuf,
 				DBGLOG(INIT, WARN, "alloc pucTempBuf fail");
 		}
 		else
-			DBGLOG(INIT, DEBUG,
-			       "No wlan-connection-roaming-backup.ini\n");
+			DBGLOG(INIT, INFO, "No wlan-connection-roaming-backup.ini\n");
 	}
 
 	return;
@@ -2822,8 +2810,7 @@ uint32_t iniFileParsing (uint8_t *aucIniText, uint32_t table_num)
 
 				/* 3 parmeter mode transforation */
 				if (i4Nargs == 3) {
-					DBGLOG(INIT, DEBUG,
-					       "ini error:3 parameters [%s,%s,%s]",
+					DBGLOG(INIT, INFO, "ini error:3 parameters [%s,%s,%s]",
 						ppcArgs[0], ppcArgs[1], ppcArgs[2]);
 					return WLAN_STATUS_FAILURE;
 				}
@@ -2836,8 +2823,7 @@ uint32_t iniFileParsing (uint8_t *aucIniText, uint32_t table_num)
 
 				/* 3 parmeter mode transforation */
 				if (i4Nargs == 3) {
-					DBGLOG(INIT, DEBUG,
-					       "ini error:3 parameters [%s,%s,%s]",
+					DBGLOG(INIT, INFO, "ini error:3 parameters [%s,%s,%s]",
 						ppcArgs[0], ppcArgs[1], ppcArgs[2]);
 					return WLAN_STATUS_FAILURE;
 				}
@@ -2889,10 +2875,8 @@ exit:
 		for (j = i+1; j < MAX_READ_ENTRY; j++) {
 			if (arReadIni[j].u8Key[0] == '\0') break;
 			if (kalStrCmp(arReadIni[i].u8Key, arReadIni[j].u8Key) == 0) {
-				DBGLOG(INIT, DEBUG,
-				       "ini duplicated parameter error [%s, %d]",
-				       arReadIni[i].u8Key,
-				       arReadIni[i].i8Value);
+				DBGLOG(INIT, INFO, "ini duplicated parameter error [%s, %d]",
+					arReadIni[i].u8Key, arReadIni[i].i8Value);
 				return WLAN_STATUS_FAILURE;
 			}
 		}
@@ -2903,10 +2887,8 @@ exit:
 		if (arReadIni[i].u8Key[0] == '\0') break;
 		for (j = 0; j < MAX_TABLE_ENTRY; j++) {
 			if (j == table_num) {
-				DBGLOG(INIT, DEBUG,
-				       "ini unsupported key:read=%d [%s]",
-				       arReadIni[i].i8Value,
-				       arReadIni[i].u8Key);
+				DBGLOG(INIT, INFO, "ini unsupported key:read=%d [%s]",
+					arReadIni[i].i8Value, arReadIni[i].u8Key);
 				break;
 			}
 
@@ -2915,13 +2897,13 @@ exit:
 			if (kalStrCmp(arReadIni[i].u8Key, arIniTable[j].u8Key) == 0) {
 				if (arIniTable[j].fgHasRange == 1) {
 					if (arReadIni[i].i8Value < arIniTable[j].i8Min) {
-						DBGLOG(INIT, DEBUG,
+						DBGLOG(INIT, INFO,
 							"ini found:read=%d(%d, %d) [%s] [Out of Range!]",
 							arReadIni[i].i8Value, arIniTable[j].i8Min,
 							arIniTable[j].i8Max, arReadIni[i].u8Key);
 					}
 					else if (arReadIni[i].i8Value > arIniTable[j].i8Max) {
-						DBGLOG(INIT, DEBUG,
+						DBGLOG(INIT, INFO,
 							"ini found:read=%d(%d, %d) [%s] [Out of Range!]",
 							arReadIni[i].i8Value, arIniTable[j].i8Min,
 							arIniTable[j].i8Max, arReadIni[i].u8Key);
@@ -3032,7 +3014,7 @@ textresume:
 		case '>':
 		case '?':
 		case '\'':
-			DBGLOG(INIT, DEBUG, "ini wrong character [%c]", *x);
+			DBGLOG(INIT, INFO, "ini wrong character [%c]", *x);
 			*s++ = *x++;
 			state->textsize++;
 			return INI_STATE_ERROR;
@@ -3098,15 +3080,76 @@ textresume:
 
 #endif
 
-int _kalSprintf(char *buf, const char *fmt, ...)
+void wlanInitExtFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 {
-	int retval;
-	va_list ap;
+	struct WIFI_VAR *prWifiVar;
 
-	va_start(ap, fmt);
-	retval = vsprintf(buf, fmt, ap);
-	va_end(ap);
-	return (retval < 0)?(0):(retval);
+#define INIT_STR(__FEATURE, __KEY, __VAL) \
+do {\
+	if (!pucKey || !kalStrnCmp(pucKey, __KEY, WLAN_CFG_KEY_LEN_MAX - 1)) { \
+		if (wlanCfgGet(prAdapter, __KEY, __FEATURE, __VAL, 0) != \
+		    WLAN_STATUS_SUCCESS) { \
+			DBGLOG(INIT, WARN, \
+				"Fail to get key %s and set val %s\n", \
+			__KEY, __VAL); \
+		} \
+	} \
+} while (0)
+
+#define INIT_TYPE(__FEATURE, __FUNC, __KEY, __VAL) \
+do {\
+	if (!pucKey || !kalStrnCmp(pucKey, __KEY, WLAN_CFG_KEY_LEN_MAX - 1)) { \
+		__FEATURE = TYPEOF(__FEATURE)__FUNC(prAdapter, __KEY, __VAL);\
+	} \
+} while (0)
+
+/* wlanCfgSet function causes side effect of avoiding being overwritten */
+#define INIT_UINT(__FEATURE, __KEY, __VAL) \
+do { \
+	INIT_TYPE(__FEATURE, wlanCfgGetUint32, __KEY, __VAL); \
+	wlanCfgSetUint32(prAdapter, __KEY, __FEATURE); \
+} while (0)
+
+#define INIT_INT(__FEATURE, __KEY, __VAL) \
+do { \
+	INIT_TYPE(__FEATURE, wlanCfgGetInt32, __KEY, __VAL); \
+	wlanCfgSetInt32(prAdapter, __KEY, __FEATURE); \
+} while (0)
+
+
+	if (!prAdapter)
+		return;
+
+	prWifiVar = &prAdapter->rWifiVar;
+
+
+	/* INIT_UINT(), wlanCfgSetUint32() here to customize project settings */
+#ifdef CFG_MTK_WIFI_SOC_S5E9925_SUPPORT
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[3], "PerfMonLv4", 120,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[4], "PerfMonLv5", 160,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[5], "PerfMonLv6", 200,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[6], "PerfMonLv7", 450,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[7], "PerfMonLv8", 800,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[8], "PerfMonLv9", 1200,
+		  FEATURE_TO_CUSTOMER);
+	INIT_UINT(prWifiVar->u4PerfMonTpTh[9], "PerfMonLv10", 2400,
+		  FEATURE_TO_CUSTOMER);
+#endif
+
+	/* Flash Communication
+	 * 0: disabled; 1: 5G only; 2: 5G+2G (not completed yet)
+	 */
+	INIT_UINT(prWifiVar->fgNanAutoFC, "NanAutoFC", 2);
+	INIT_UINT(prWifiVar->ucNanUseR4AvailAttr, "NanUseR4Avail", 0);
+
+
+#undef INIT_STR
+#undef INIT_TYPE
+#undef INIT_UINT
+#undef INIT_INT
 }
-
-

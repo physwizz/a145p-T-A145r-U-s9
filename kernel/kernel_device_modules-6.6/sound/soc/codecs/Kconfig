@@ -195,6 +195,15 @@ config SND_SOC_MT6681_ACCDET
 	  detection mechanism. Select N if you don't
 	  have jack on board.
 
+config SND_SOC_MEDIATEK_CS35L45
+	tristate "cirrus CS35L45 speaker amplifier"
+	depends on I2C
+	help
+	  Config of CS35L45. It is a Smart power
+	  amplifier which contain speaker protection,
+	  multi-band DRC, equalizer function. It would
+	  be set to yes if device with CS35L45 on it.
+
 config SND_SOC_AK7709
 	tristate "Asahi Kasei Microdevices AK7709 CODEC (SPI)"
 	depends on SPI_MASTER

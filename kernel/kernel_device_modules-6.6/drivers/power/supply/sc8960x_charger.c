@@ -223,6 +223,10 @@ struct sc8960x_chip {
     /*Tab A9 code for AX6739A-516 | OT11BSP-42 by qiaodan at 20230613 start*/
     int typec_attached;
     /*Tab A9 code for AX6739A-516 | OT11BSP-42 by qiaodan at 20230613 end*/
+    bool force_dpdm;
+    bool is_pd_type;
+    bool is_hiz_mode;
+    bool pre_is_hiz_mode;
 
     struct delayed_work force_detect_dwork;
     int force_detect_count;
@@ -232,9 +236,6 @@ struct sc8960x_chip {
     struct delayed_work hvdcp_done_work;
     bool hvdcp_done;
     /*Tab A9 code for AX6739A-409 by wenyaqi at 20230530 end*/
-    /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 start*/
-    bool hiz_force_dpdm;
-    /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 end*/
 
     struct power_supply_desc psy_desc;
     struct power_supply_config psy_cfg;
@@ -636,17 +637,13 @@ __attribute__((unused)) static int sc8960x_set_hiz(struct sc8960x_chip *sc, bool
 {
     int reg_val = enable ? 1 : 0;
     /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 start*/
-    static bool s_hiz_stat_old = false;
-
     if (enable == true) {
         sc->hvdcp_done = false;
     }
-    if (enable == false && s_hiz_stat_old == true) {
-        dev_info(sc->dev, "%s exit hiz to rerun bc12\n", __func__);
-        sc->hiz_force_dpdm = true;
-    }
-    s_hiz_stat_old = enable;
     /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 end*/
+    sc->pre_is_hiz_mode = sc->is_hiz_mode;
+    sc->is_hiz_mode = enable;
+    dev_info(sc->dev, "%s: pre_is_hiz_mode:%d, is_hiz_mode:%d\n", __func__, sc->pre_is_hiz_mode, sc->is_hiz_mode);
 
     return sc8960x_field_write(sc, EN_HIZ, reg_val);
 }
@@ -666,6 +663,11 @@ static int sc8960x_chg_set_usbsw(struct sc8960x_chip *sc,
     int ret = 0; 
     int mode = (usbsw == USBSW_CHG) ? PHY_MODE_BC11_SET :
                            PHY_MODE_BC11_CLR;
+
+    if (sc->is_pd_type == true) {
+        pr_err("is pd_type, skip set usbsw\n");
+        return ret;
+    }
 
     pr_err("usbsw=%d\n", usbsw);
     phy = phy_get(sc->dev, "usb2-phy");
@@ -1646,30 +1648,29 @@ static int sc8960x_chg_attach_pre_process(struct sc8960x_chip *sc, int attach)
     sc->typec_attached = attach;
     switch(attach) {
         case ATTACH_TYPE_TYPEC:
-            /*A14 code for SR-AL6528V-01-2 by chenyulin at 20240925 start*/
-            if(sc->psy_usb_type == false || sc->chg_type == false){
-            /*Tab A9 code for AX6739A-2077 | AX6739A-2728 by wenyaqi at 20230906 start*/
-                schedule_delayed_work(&sc->force_detect_dwork, msecs_to_jiffies(150));
-            /*Tab A9 code for AX6739A-2077 | AX6739A-2728 by wenyaqi at 20230906 end*/
-                dev_err(sc->dev, "%s: type second detection\n", __func__);
-            }
-            /*A14 code for SR-AL6528V-01-2 by chenyulin at 20240925 end*/
+            sc->is_pd_type = false;
             break;
         case ATTACH_TYPE_PD_SDP:
             sc->chg_type = POWER_SUPPLY_TYPE_USB;
             sc->psy_usb_type = POWER_SUPPLY_USB_TYPE_SDP;
+            sc->is_pd_type = true;
             break;
         case ATTACH_TYPE_PD_DCP:
             sc->chg_type = POWER_SUPPLY_TYPE_USB_DCP;
             sc->psy_usb_type = POWER_SUPPLY_USB_TYPE_DCP;
+            sc->is_pd_type = true;
             break;
         case ATTACH_TYPE_PD_NONSTD:
             sc->chg_type = POWER_SUPPLY_TYPE_USB;
             sc->psy_usb_type = POWER_SUPPLY_USB_TYPE_DCP;
+            sc->is_pd_type = true;
             break;
         case ATTACH_TYPE_NONE:
             sc->chg_type = POWER_SUPPLY_TYPE_UNKNOWN;
             sc->psy_usb_type = POWER_SUPPLY_USB_TYPE_UNKNOWN;
+            sc->is_pd_type = false;
+            sc->pre_is_hiz_mode = false;
+            sc->is_hiz_mode = false;
             break;
         default:
             dev_info(sc->dev, "%s: using tradtional bc12 flow!\n", __func__);
@@ -1700,6 +1701,11 @@ static void sc8960x_force_detection_dwork_handler(struct work_struct *work)
         return;
     }
 
+    if (sc->is_pd_type == true) {
+        pr_err("is pd_type, skip force_dpdm\n");
+        return;
+    }
+
     msleep(100);
     sc8960x_chg_set_usbsw(sc, USBSW_CHG);
     msleep(100);
@@ -1710,6 +1716,7 @@ static void sc8960x_force_detection_dwork_handler(struct work_struct *work)
         return;
     }
 
+    sc->force_dpdm = true;
     sc->force_detect_count++;
 }
 
@@ -1745,8 +1752,8 @@ static int sc8960x_get_charger_type(struct sc8960x_chip *sc)
     case VBUS_STAT_SDP:
         /*A14_V code for SR-AL6528V-01-129 by chenyulin at 20241009 start*/
         if (sc->sdp_detect) {
+            sc->power_good = false;
             sc8960x_enable_bc12(sc, false);
-            Charger_Detect_Init();
             schedule_delayed_work(&sc->force_detect_dwork, msecs_to_jiffies(0));
             sc->sdp_detect = false;
             dev_err(sc->dev, "%s: force dpdm failed(%d)\n", __func__, ret);
@@ -1757,13 +1764,11 @@ static int sc8960x_get_charger_type(struct sc8960x_chip *sc)
         sc->chg_type = POWER_SUPPLY_TYPE_USB;
         /*A14_V code for SR-AL6528V-01-129 by chenyulin at 20241009 start*/
         sc8960x_chg_set_usbsw(sc, USBSW_USB);
-        Charger_Detect_Release();
         /*A14_V code for SR-AL6528V-01-129 by chenyulin at 20241009 end*/
         break;
     case VBUS_STAT_CDP:
         sc->psy_usb_type = POWER_SUPPLY_USB_TYPE_CDP;
         sc->chg_type = POWER_SUPPLY_TYPE_USB_CDP;
-        Charger_Detect_Release();
         break;
     case VBUS_STAT_DCP:
     case VBUS_STAT_HVDCP:
@@ -1808,6 +1813,27 @@ static irqreturn_t sc8960x_irq_handler(int irq, void *data)
 
     dev_info(sc->dev, "%s: sc8960x_irq_handler\n", __func__);
 
+    ret = sc8960x_field_read(sc, PG_STAT, &reg_val);
+    if (ret)
+        return IRQ_HANDLED;
+    sc->power_good = !!reg_val;
+    dev_info(sc->dev, "%s: sc->power_good:%d\n", __func__, sc->power_good);
+
+    if (sc->pre_is_hiz_mode == true && sc->is_hiz_mode == false) {
+        sc->hvdcp_done = false;
+        if (sc->power_good == false) {
+            return IRQ_HANDLED;
+        }
+
+        if (sc->is_pd_type != true &&
+            sc->chg_type == POWER_SUPPLY_TYPE_USB_DCP) {
+            schedule_delayed_work(&sc->force_detect_dwork, msecs_to_jiffies(0));
+        }
+        sc->pre_is_hiz_mode = sc->is_hiz_mode;
+        dev_info(sc->dev, "%s: hiz mode changed\n", __func__);
+        return IRQ_HANDLED;
+    }
+
     ret = sc8960x_field_read(sc, VBUS_GD, &reg_val);
     if (ret) {
         return IRQ_HANDLED;
@@ -1815,19 +1841,17 @@ static irqreturn_t sc8960x_irq_handler(int irq, void *data)
     prev_vbus_gd = sc->vbus_good;
     sc->vbus_good = !!reg_val;
 
+    dev_info(sc->dev, "%s: prev_vbus_gd:%d, sc->vbus_good:%d\n", __func__, prev_vbus_gd, sc->vbus_good);
+    dev_info(sc->dev, "%s: pre_is_hiz_mode:%d, is_hiz_mode:%d\n", __func__, sc->pre_is_hiz_mode, sc->is_hiz_mode);
+
     if (!prev_vbus_gd && sc->vbus_good) {
         sc->force_detect_count = 0;
         dev_info(sc->dev, "%s: adapter/usb inserted\n", __func__);
+        schedule_delayed_work(&sc->force_detect_dwork, msecs_to_jiffies(0));
         sc->chg_config = true;
         /*A14_V code for SR-AL6528V-01-129 by chenyulin at 20241012 start*/
         sc->sdp_detect = true;
         /*A14_V code for SR-AL6528V-01-129 by chenyulin at 20241012 end*/
-        /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 start*/
-        if (sc->hiz_force_dpdm == true && sc->chg_type != POWER_SUPPLY_TYPE_UNKNOWN) {
-            msleep(100);
-            sc8960x_force_dpdm(sc);
-        }
-        /*Tab A9 code for SR-AX6739A-01-486 by wenyaqi at 20230619 end*/
     } else if (prev_vbus_gd && !sc->vbus_good) {
         dev_info(sc->dev, "%s: adapter/usb removed\n", __func__);
         /*Tab A9 code for AX6739A-527 by hualei at 20230609 start*/
@@ -1837,6 +1861,7 @@ static irqreturn_t sc8960x_irq_handler(int irq, void *data)
         // sc->chg_type = POWER_SUPPLY_TYPE_UNKNOWN;
         /*Tab A9 code for AX6739A-516 by wenyaqi at 20230603 end*/
         sc->chg_config = false;
+        sc->force_dpdm = false;
         /*Tab A9 code for AX6739A-409 by wenyaqi at 20230530 start*/
         cancel_delayed_work_sync(&sc->hvdcp_done_work);
         /*Tab A9 code for OT11BSP-42 by qiaodan at 20230613 start*/
@@ -1845,17 +1870,18 @@ static irqreturn_t sc8960x_irq_handler(int irq, void *data)
         sc->hvdcp_done = false;
         sc8960x_chg_set_usbsw(sc, USBSW_USB);
         /*Tab A9 code for AX6739A-409 by wenyaqi at 20230530 end*/
+        sc->is_pd_type = false;
+        sc->pre_is_hiz_mode = false;
+        sc->is_hiz_mode = false;
     }
 
     /*Tab A9 code for OT11BSP-42 | P230612-08698 | SR-AX6739A-01-486 by wenyaqi at 20230619 start*/
-    if (sc->vbus_good == true && sc->chg_type == POWER_SUPPLY_TYPE_UNKNOWN) {
+    if (sc->force_dpdm == true && sc->power_good == true) {
         sc8960x_get_charger_type(sc);
+        sc->force_dpdm = false;
         if (sc->psy_usb_type != POWER_SUPPLY_USB_TYPE_DCP) {
             sc8960x_chg_set_usbsw(sc, USBSW_USB);
         }
-    } else if (prev_vbus_gd && sc->vbus_good && sc->hiz_force_dpdm == true) {
-        sc->hiz_force_dpdm = false;
-        sc8960x_get_charger_type(sc);
     }
     /*Tab A9 code for OT11BSP-42 | P230612-08698 | SR-AX6739A-01-486 by wenyaqi at 20230619 end*/
 
@@ -2381,7 +2407,7 @@ static int sc8960x_charger_probe(struct i2c_client *client)
     INIT_DELAYED_WORK(&sc->hvdcp_done_work, hvdcp_done_work_func);
     sc->hvdcp_done = false;
     /*Tab A9 code for AX6739A-409 by wenyaqi at 20230530 end*/
-    sc->hiz_force_dpdm = false;
+
     ret = sc8960x_detect_device(sc);
     if (ret) {
         dev_err(sc->dev, "No sc8960x device found!\n");
@@ -2457,6 +2483,10 @@ static int sc8960x_charger_probe(struct i2c_client *client)
     sc->vbus_good = !!reg_val;
     dev_info(sc->dev, "%s get vbus_good=%d\n", __func__, sc->vbus_good);
     /*Tab A9 code for AX6739A-2077 | AX6739A-2728 by wenyaqi at 20230906 end*/
+
+    if (sc->vbus_good == true) {
+        schedule_delayed_work(&sc->force_detect_dwork, msecs_to_jiffies(2000));
+    }
 
     dev_info(sc->dev, "sc8960x probe successfully, Part Num:%d, Revision:%d\n!",
         sc->part_no, sc->dev_version);

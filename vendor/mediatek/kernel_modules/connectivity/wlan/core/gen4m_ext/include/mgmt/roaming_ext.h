@@ -514,3 +514,8 @@ void roamingFsmInitScanTimer(struct ADAPTER *prAdapter,
 
 void roamingDumpConfig(struct ADAPTER *prAdapter,
 	uint8_t ucBssIndex);
+
+void aisRoamNeedPartialScan(
+	struct ADAPTER *prAdapter,
+	uint8_t ucBssIndex,
+	uint8_t *doPartialScan);

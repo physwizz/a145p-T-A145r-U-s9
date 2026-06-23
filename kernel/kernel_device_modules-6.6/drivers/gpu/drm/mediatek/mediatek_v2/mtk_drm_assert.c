@@ -354,6 +354,8 @@ int drm_show_dal(struct drm_crtc *crtc, bool enable)
 	if (mtk_crtc == NULL) {
 		DDPPR_ERR("%s: mtk_crtc is null\n", __func__);
 		return 0;
+	} else if (priv->data->mmsys_id == MMSYS_MT6991) {
+		return 0;
 	}
 
 	ovl_comp = _handle_phy_top_plane(mtk_crtc);

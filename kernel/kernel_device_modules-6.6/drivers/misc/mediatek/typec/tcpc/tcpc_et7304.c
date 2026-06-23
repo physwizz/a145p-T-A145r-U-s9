@@ -961,13 +961,7 @@ static int et7304_get_cc(struct tcpc_device *tcpc, int *cc1, int *cc2)
 	status = et7304_i2c_read8(tcpc, TCPC_V10_REG_CC_STATUS);
 	if (status < 0)
 		return status;
-	/* hs14 code for AL6528ADEU-2531 by qiaodan at 2022/11/16 start */
-	/*work around for A to C cable when enter standby mode*/
-	if (status == 0x10) {
-		et7304_i2c_write8(tcpc, TCPC_V10_REG_ALERT, 0x1);
-		et7304_i2c_write8(tcpc, ET7304_REG_BMC_CTRL, 0xe);
-	}
-	/* hs14 code for AL6528ADEU-2531 by qiaodan at 2022/11/16 end */
+
 	role_ctrl = et7304_i2c_read8(tcpc, TCPC_V10_REG_ROLE_CTRL);
 	if (role_ctrl < 0)
 		return role_ctrl;
@@ -982,16 +976,22 @@ static int et7304_get_cc(struct tcpc_device *tcpc, int *cc1, int *cc2)
 	*cc2 = TCPC_V10_REG_CC_STATUS_CC2(status);
 
 	act_as_drp = TCPC_V10_REG_ROLE_CTRL_DRP & role_ctrl;
-
+	/*A14_V code for P250902-05244 by shanxinkai at 20250906 start*/
+	ET7304_INFO("%s status=%d, role_ctrl=%d, act_as_drp=%d, typec_polarity=%d\n",
+		__func__, status, role_ctrl, act_as_drp, tcpc->typec_polarity);
 	if (act_as_drp) {
 		act_as_sink = TCPC_V10_REG_CC_STATUS_DRP_RESULT(status);
 	} else {
-		cc_role =  TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
+		if (tcpc->typec_polarity)
+			cc_role = TCPC_V10_REG_CC_STATUS_CC2(role_ctrl);
+		else
+			cc_role = TCPC_V10_REG_CC_STATUS_CC1(role_ctrl);
 		if (cc_role == TYPEC_CC_RP)
 			act_as_sink = false;
 		else
 			act_as_sink = true;
 	}
+	/*A14_V code for P250902-05244 by shanxinkai at 20250906 end*/
 
 	/*
 	 * If status is not open, then OR in termination to convert to
@@ -1035,6 +1035,10 @@ static int et7304_set_cc(struct tcpc_device *tcpc, int pull)
 	ET7304_INFO("\n");
 	pull = TYPEC_CC_PULL_GET_RES(pull);
 	if (pull == TYPEC_CC_DRP) {
+		/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 start*/
+		et7304_i2c_write8(tcpc, TCPC_V10_REG_ALERT, 0x1);
+		et7304_i2c_write8(tcpc, ET7304_REG_BMC_CTRL, 0xe);
+		/*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 end*/
 		data = TCPC_V10_REG_ROLE_CTRL_RES_SET(
 				1, rp_lvl, TYPEC_CC_RD, TYPEC_CC_RD);
 

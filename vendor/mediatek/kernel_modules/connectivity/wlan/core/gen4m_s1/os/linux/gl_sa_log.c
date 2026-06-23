@@ -353,6 +353,9 @@ ssize_t wifi_salog_write(char *buf, size_t count)
 {
 	ssize_t ret = 0;
 
+	if (kalIsHalted())
+		return -EPERM;
+
 	ret = sa_ring_write(&gSaDev->iRing, buf, count);
 	if (ret > 0)
 		wake_up_interruptible(&gSaDev->wq);

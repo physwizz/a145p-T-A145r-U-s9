@@ -64,17 +64,10 @@ static int extstream2_status;
 //#define DEBUG_VERBOSE
 //#define DEBUG_VERBOSE_IRQ
 
-#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUTO_AUDIO_DSP)
 static inline unsigned long long clr_bit(int bit, unsigned long long *addr)
 {
 	return (*addr & ~(1ULL << bit));
 }
-#else
-static inline unsigned long clr_bit(int bit, unsigned long *addr)
-{
-	return (*addr & ~(1UL << bit));
-}
-#endif
 
 static int dsp_task_attr_set(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
@@ -521,6 +514,8 @@ static const struct snd_kcontrol_new dsp_platform_kcontrols[] = {
 		       dsp_task_attr_get, dsp_task_attr_set),
 	SOC_SINGLE_EXT("dsp_callul_default_en", SND_SOC_NOPM, 0, 0x1, 0,
 		       dsp_task_attr_get, dsp_task_attr_set),
+	SOC_SINGLE_EXT("dsp_fast_media_default_en", SND_SOC_NOPM, 0, 0xff, 0,
+		dsp_task_attr_get, dsp_task_attr_set),
 #if IS_ENABLED(CONFIG_MTK_ADSP_AUTO_HFP_CLIENT_SUPPORT)
 	SOC_SINGLE_EXT("dsp_hfp_client_rx_default_en", SND_SOC_NOPM, 0, 0xff, 0,
 		       dsp_task_attr_get, dsp_task_attr_set),
@@ -642,6 +637,8 @@ static const struct snd_kcontrol_new dsp_platform_kcontrols[] = {
 	SOC_SINGLE_EXT("dsp_callul_runtime_en", SND_SOC_NOPM, 0, 0x1, 0,
 		       dsp_task_attr_get, dsp_task_attr_set),
 	SOC_SINGLE_EXT("dsp_callul_ref_runtime_en", SND_SOC_NOPM, 0, 0x1, 0,
+		       dsp_task_attr_get, dsp_task_attr_set),
+	SOC_SINGLE_EXT("dsp_fast_media_runtime_en", SND_SOC_NOPM, 0, 0x1, 0,
 		       dsp_task_attr_get, dsp_task_attr_set),
 #if IS_ENABLED(CONFIG_MTK_ADSP_AUTO_HFP_CLIENT_SUPPORT)
 	SOC_SINGLE_EXT("dsp_hfp_client_rx_runtime_en", SND_SOC_NOPM, 0, 0x1, 0,
@@ -1734,11 +1731,7 @@ void audio_irq_handler(int irq, void *data, int core_id)
 	struct mtk_base_dsp *dsp = (struct mtk_base_dsp *)data;
 	unsigned long task_value;
 	int dsp_scene, task_id, loop_count;
-#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUTO_AUDIO_DSP)
 	unsigned long long *pdtoa;
-#else
-	unsigned long *pdtoa;
-#endif
 
 	if (!dsp) {
 		pr_info("%s dsp[%p]\n", __func__, dsp);
@@ -1759,12 +1752,8 @@ void audio_irq_handler(int irq, void *data, int core_id)
 	if (get_adsp_semaphore(SEMA_AUDIO))
 		pr_info("%s get semaphore fail\n", __func__);
 
-#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUTO_AUDIO_DSP)
 	pdtoa = (unsigned long long *)&dsp->core_share_mem.ap_adsp_core_mem[core_id]->dtoa_flag;
-#else
-	pdtoa = (unsigned long *)
-		&dsp->core_share_mem.ap_adsp_core_mem[core_id]->dtoa_flag;
-#endif
+
 	loop_count = DSP_IRQ_LOOP_COUNT;
 
 	/* rmb() ensure pdtoa read correct dram data */
@@ -1772,11 +1761,7 @@ void audio_irq_handler(int irq, void *data, int core_id)
 
 	do {
 		/* valid bits */
-#if IS_ENABLED(CONFIG_SND_SOC_MTK_AUTO_AUDIO_DSP)
 		task_value = fls64(*pdtoa);
-#else
-		task_value = fls(*pdtoa);
-#endif
 
 		/* rmb() ensure task_value read dram(pdtoa) after fls */
 		rmb();
@@ -1855,6 +1840,7 @@ static int audio_send_reset_event(void)
 			(i == TASK_SCENE_CAPTURE_MCH) ||
 #endif
 			(i == TASK_SCENE_FAST) ||
+			(i == TASK_SCENE_FAST_MEDIA) ||
 			(i == TASK_SCENE_SPATIALIZER) ||
 			(i == TASK_SCENE_CAPTURE_RAW) ||
 			(i == TASK_SCENE_UL_PROCESS)) {

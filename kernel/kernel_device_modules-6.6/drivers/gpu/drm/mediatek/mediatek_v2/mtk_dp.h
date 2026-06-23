@@ -62,6 +62,7 @@ enum DPTx_Return_Status {
 	DPTX_EDID_FAIL			= 4,
 	DPTX_TRANING_FAIL		= 5,
 	DPTX_RETRANING			= 6,
+	DPTX_WAIT_TRIGGER		= 7,
 };
 
 enum DPTX_TRAINING_STATE {
@@ -174,7 +175,9 @@ enum DPTx_PREEMPHASIS_NUM {
 enum DP_VIDEO_TIMING_TYPE {
 	SINK_640_480 = 0,
 	SINK_800_600,
+	SINK_848_480,
 	SINK_1280_720,
+	SINK_1280_800,
 	SINK_1280_960,
 	SINK_1280_1024,
 	SINK_1920_1080,
@@ -183,6 +186,7 @@ enum DP_VIDEO_TIMING_TYPE {
 	SINK_1080_2460,
 	SINK_1920_1200,
 	SINK_1920_1440,
+	SINK_2048_1536,
 	SINK_2560_1440,
 	SINK_2560_1600,
 	SINK_3840_2160_30,
@@ -201,6 +205,13 @@ enum DPTX_VIDEO_MODE {
 	DPTX_VIDEO_PROGRESSIVE  = 1,
 };
 
+enum DPCD_REV {
+	DPCD_R1_0 = 0x10,
+	DPCD_R1_1 = 0x11,
+	DPCD_R1_2 = 0x12,
+	DPCD_R1_3 = 0x13,
+	DPCD_R1_4 = 0x14,
+};
 
 #define FAKE_DEFAULT_RES 0xFF
 
@@ -281,6 +292,7 @@ int mtk_dp_phy_getInfo(char *buffer, int size);
 #endif
 void mdrv_DPTx_reAuthentication(struct mtk_dp *mtk_dp);
 void mdrv_DPTx_PatternSet(bool enable, int resolution);
+void mdrv_DPTx_ColorSet(int bpc, int format);
 void mdrv_DPTx_set_maxlinkrate(bool enable, int maxlinkrate);
 void mtk_dp_SWInterruptSet(int bstatus);
 void mtk_dp_aux_swap_enable(bool enable);
@@ -290,6 +302,7 @@ extern void mtk_dp_intf_mode_copy(struct drm_display_mode *mode);
 extern void mtk_dp_intf_prepare_clk(void);
 extern void mtk_dp_intf_unprepare_clk(void);
 extern void mhal_DPTx_VideoClock(bool enable, int resolution);
+extern void mhal_DPTx_ModeCopy(struct drm_display_mode *mode);
 void mtk_dp_clock_debug(unsigned int clksrc, unsigned int con1);
 unsigned int mtk_de_get_clk_debug(void);
 unsigned int mtk_de_get_clksrc(void);
@@ -297,6 +310,7 @@ unsigned int mtk_de_get_con1(void);
 void mtk_dp_vsvoter_set(struct mtk_dp *mtk_dp);
 void mtk_dp_vsvoter_clr(struct mtk_dp *mtk_dp);
 void dptx_dump_reg(void);
+void mtk_drm_dp_trigger_hdcp(void);
 void dptx_write_reg(u32 offset, u32 val);
 void dptx_shutdown(void);
 #endif //__MTK_DP__H__

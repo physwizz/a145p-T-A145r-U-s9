@@ -99,24 +99,33 @@ mediatek-drm-y += mtk_dp_intf.o \
 	mtk_dp.o \
 	mtk_dp_hal.o \
 	mtk_dp_debug.o
+
+# TRUSTONIC TEE
+ifneq ($(findstring $(CONFIG_TRUSTONIC_TEE_SUPPORT), y m),)
+include $(DEVICE_MODULES_PATH)/drivers/tee/gud/Makefile.include
+ccflags-y += -DDPTX_HDCP_ENABLE
+#ccflags-y += -DHDCP_SETKEY_FROM_KERNEL
+ccflags-y += -DHDCP_TEE_TYPE_TRUSTONIC
+mediatek-drm-y += ca/tlcDpHdcp.o \
+	mtk_dp_hdcp1x.o \
+	mtk_dp_hdcp2.o
+endif
+
+# TEEGRIS TEE
+ifneq ($(findstring $(CONFIG_TEEGRIS_TEE_SUPPORT), y m),)
+include $(DEVICE_MODULES_PATH)/drivers/tee/tzdev/6/include/Makefile.include
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/tee/tzdev/6/include/tzdev/
+ccflags-y += -DDPTX_HDCP_ENABLE
+#ccflags-y += -DHDCP_SETKEY_FROM_KERNEL
+ccflags-y += -DHDCP_TEE_TYPE_TEEGRIS
+mediatek-drm-y += ca/tlcDpHdcp.o \
+	mtk_dp_hdcp1x.o \
+	mtk_dp_hdcp2.o
+endif
 endif
 
 #for 6382 bridge
 mediatek-drm-y += mtk_disp_bdg.o
-
-ifeq (yy, $(CONFIG_MTK_TEE_GP_SUPPORT)$(CONFIG_TRUSTONIC_TEE_SUPPORT))
-obj-y += ca/
-ccflags-y += -DDPTX_HDCP_ENABLE
-obj-y += mtk_dp_hdcp1x.o \
-	mtk_dp_hdcp2.o
-endif
-
-#ifeq ($(CONFIG_TRUSTONIC_TEE_SUPPORT),m)
-#obj-$(CONFIG_DEVICE_MODULES_DRM_MEDIATEK) += ca/
-#ccflags-y += -DDPTX_HDCP_ENABLE
-#mediatek-drm-y += mtk_dp_hdcp1x.o \
-#	mtk_dp_hdcp2.o
-#endif
 
 ifeq ($(CONFIG_DRM_MEDIATEK_EDPTX_AUTO_SUPPORT), m)
 mediatek-drm-y += mtk_drm_edp/mtk_dvo.o

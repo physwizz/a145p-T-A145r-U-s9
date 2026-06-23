@@ -403,6 +403,9 @@
 #define S5KGW3_SENSOR_ID                        0x7309
 
 /*HI*/
+#define HI1337_SENSOR_ID                        0x1337
+#define HI1337F_SENSOR_ID                       0x1338
+#define HI1337FU_SENSOR_ID                      0x1339
 #define HI841_SENSOR_ID                         0x0841
 #define HI707_SENSOR_ID                         0x00b8
 #define HI704_SENSOR_ID                         0x0096
@@ -705,6 +708,9 @@
 #define SENSOR_DRVNAME_S5KGW3_MIPI_RAW         "s5kgw3_mipi_raw"
 /*HI*/
 #define SENSOR_DRVNAME_HI841_MIPI_RAW           "hi841_mipi_raw"
+#define SENSOR_DRVNAME_HI1337_MIPI_RAW          "hi1337_mipi_raw"
+#define SENSOR_DRVNAME_HI1337F_MIPI_RAW         "hi1337f_mipi_raw"
+#define SENSOR_DRVNAME_HI1337FU_MIPI_RAW        "hi1337fu_mipi_raw"
 #define SENSOR_DRVNAME_HI707_YUV                "hi707_yuv"
 #define SENSOR_DRVNAME_HI704_YUV                "hi704_yuv"
 #define SENSOR_DRVNAME_HI556_MIPI_RAW           "hi556_mipi_raw"

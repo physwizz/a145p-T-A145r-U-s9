@@ -26,13 +26,6 @@ struct NAN_DISCOVERY_EVENT {
 	uint8_t aucSecurityInfo[32];
 	uint8_t ucSdf_match_filter_len;
 	uint8_t aucSdf_match_filter[NAN_FW_MAX_MATCH_FILTER_LEN];
-#if (defined(CFG_SUPPORT_NAN_R4_PAIRING) && CFG_SUPPORT_NAN_R4_PAIRING == 1)
-	/* For NAN Pairing */
-	uint8_t ucPairingEnable;
-	uint8_t aucRsvd2[3];
-	uint64_t u8NiraNonce;
-	uint64_t u8NiraTag;
-#endif /* CFG_SUPPORT_NAN_R4_PAIRING */
 };
 
 /* Followup event
@@ -64,18 +57,6 @@ struct NAN_FOLLOW_UP_EVENT {
 
 	/* Tx status */
 	uint32_t tx_status;
-#if (defined(CFG_SUPPORT_NAN_R4_PAIRING) && CFG_SUPPORT_NAN_R4_PAIRING == 1)
-	/* Pairing Bootstrapping flow */
-	uint8_t bootstrapping_type;
-	uint8_t bootstrapping_status;
-	uint16_t bootstrapping_method;
-
-
-	/* For SKDA */
-	uint16_t key_length;
-	uint8_t key_data[NAN_KDE_ATTR_BUF_SIZE];
-#endif /* CFG_SUPPORT_NAN_R4_PAIRING */
-
 };
 
 struct NAN_DE_EVENT {
@@ -254,20 +235,6 @@ struct NanFWPublishRequest {
 	struct NanSecurityKeyInfo key_info;
 
 	uint8_t service_name_hash[NAN_SERVICE_HASH_LENGTH];
-#if (defined(CFG_SUPPORT_NAN_R4_PAIRING) && CFG_SUPPORT_NAN_R4_PAIRING == 1)
-	/* NAN Pairing enable and NPK/NIK caching enable */
-	uint8_t pairing_enable;
-	uint8_t key_caching_enable;
-
-	/* NAN Pairing Bootstrapping info */
-	uint8_t bootstrap_type;
-	uint16_t bootstrap_method;
-
-	/* NAN Identiry Resolution Attr (NIRA) */
-	uint8_t nira_enable;
-	uint64_t tag;
-	uint64_t nonce;
-#endif /* CFG_SUPPORT_NAN_R4_PAIRING */
 } __KAL_ATTRIB_PACKED__ __KAL_ATTRIB_ALIGNED__(4);
 
 /* NAN Subscribe Structure
@@ -432,15 +399,6 @@ struct NanFWSubscribeRequest {
 	uint8_t sdea_service_specific_info[NAN_MAX_SDEA_LEN];
 
 	uint8_t service_name_hash[NAN_SERVICE_HASH_LENGTH];
-#if (defined(CFG_SUPPORT_NAN_R4_PAIRING) && CFG_SUPPORT_NAN_R4_PAIRING == 1)
-	/* NAN Pairing enable and NPK/NIK caching enable */
-	uint8_t pairing_enable;
-	uint8_t key_caching_enable;
-
-	/* NAN Pairing Bootstrapping info */
-	uint8_t bootstrap_type;
-	uint16_t bootstrap_method;
-#endif /* CFG_SUPPORT_NAN_R4_PAIRING */
 } __KAL_ATTRIB_PACKED__ __KAL_ATTRIB_ALIGNED__(4);
 
 __KAL_ATTRIB_PACKED_FRONT__ __KAL_ATTRIB_ALIGNED_FRONT__(4)
@@ -472,18 +430,6 @@ struct NanFWTransmitFollowupRequest {
 	/* Sequence of values indicating the service specific info in SDEA */
 	uint16_t sdea_service_specific_info_len;
 	uint8_t sdea_service_specific_info[NAN_FW_MAX_FOLLOW_UP_SDEA_LEN];
-#if (defined(CFG_SUPPORT_NAN_R4_PAIRING) && CFG_SUPPORT_NAN_R4_PAIRING == 1)
-	/* NAN Pairing enable and NPK/NIK caching enable */
-	uint8_t pairing_enable;
-	uint8_t key_cache_enable;
-
-	/* NAN Pairing Bootstrapping info */
-	uint8_t bootstrap_enable;
-	uint8_t bootstrap_type;
-	uint16_t bootstrap_method;
-	uint8_t bootstrap_status;
-	uint16_t comeback_after;
-#endif /* CFG_SUPPORT_NAN_R4_PAIRING */
 } __KAL_ATTRIB_PACKED__ __KAL_ATTRIB_ALIGNED__(4);
 
 struct service_specificy_info {

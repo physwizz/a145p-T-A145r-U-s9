@@ -69,6 +69,7 @@
 #include "mtk_disp_pq_helper.h"
 #include "mtk_disp_vidle.h"
 #include "mtk_vdisp_common.h"
+#include "mtk_dp.h"
 
 #ifdef CONFIG_MTK_FB_MMDVFS_SUPPORT
 #include <linux/interconnect.h>
@@ -2248,6 +2249,11 @@ static int mtk_atomic_commit(struct drm_device *drm,
 #endif
 	mtk_atomic_complete(private, state);
 
+	if (drm_crtc_index(crtc) == 1) {
+		if (mtk_crtc->sec_on)
+			mtk_drm_dp_trigger_hdcp();
+	}
+
 	mutex_nested_time_end = sched_clock();
 	mutex_nested_time_period =
 			mutex_nested_time_end - mutex_nested_time_start;
@@ -2273,8 +2279,8 @@ mutex_unlock:
 
 cm_unlock:
 	DRM_MMP_EVENT_END(mutex_lock, 0, 0);
-	DDP_COMMIT_UNLOCK(&private->commit.lock, __func__, pf);
 	mtk_crtc0->need_lock_tid = 0;
+	DDP_COMMIT_UNLOCK(&private->commit.lock, __func__, pf);
 	mtk_check_powermode(state, MTK_POWER_MODE_DONE);
 	DDP_PROFILE("[PROFILE] %s-\n", __func__);
 
@@ -3465,6 +3471,37 @@ static const enum mtk_ddp_comp_id mt6991_mtk_ddp_main_bringup[] = {
 #endif
 };
 
+static const enum mtk_ddp_comp_id mt6991_mtk_ddp_main_bypass_pc_bringup[] = {
+	DDP_COMPONENT_DLI_ASYNC0,
+	DDP_COMPONENT_PQ0_IN_CB0,
+#ifdef DRM_BYPASS_PQ
+	DDP_COMPONENT_PQ0_OUT_CB6,
+	DDP_COMPONENT_PANEL0_COMP_OUT_CB1,
+	DDP_COMPONENT_DLO_ASYNC1, DDP_COMPONENT_DLI_ASYNC21,
+	DDP_COMPONENT_SPLITTER0_IN_CB1,
+	DDP_COMPONENT_SPLITTER0_OUT_CB9,
+#else
+	DDP_COMPONENT_MDP_RSZ0,		DDP_COMPONENT_TDSHP0,
+	DDP_COMPONENT_CCORR0,		DDP_COMPONENT_COLOR0,
+	DDP_COMPONENT_C3D0,		DDP_COMPONENT_CCORR1,
+	DDP_COMPONENT_C3D1,		DDP_COMPONENT_DMDP_AAL0,
+	DDP_COMPONENT_AAL0,		DDP_COMPONENT_GAMMA0,
+	DDP_COMPONENT_POSTMASK0,	DDP_COMPONENT_DITHER0,
+	DDP_COMPONENT_PQ0_OUT_CB0,
+	DDP_COMPONENT_PANEL0_COMP_OUT_CB1,
+	DDP_COMPONENT_DLO_ASYNC1, DDP_COMPONENT_DLI_ASYNC21,
+	DDP_COMPONENT_SPLITTER0_IN_CB1,
+	DDP_COMPONENT_SPLITTER0_OUT_CB9,
+#endif
+	DDP_COMPONENT_COMP0_OUT_CB6,
+	DDP_COMPONENT_MERGE0_OUT_CB0,
+	DDP_COMPONENT_DSI0,
+	DDP_COMPONENT_VDISP_AO,
+#ifndef DRM_BYPASS_PQ
+	DDP_COMPONENT_CHIST0,	DDP_COMPONENT_CHIST1,
+#endif
+};
+
 static const enum mtk_ddp_comp_id mt6991_mtk_ddp_mem_dp_wo_tdshp[] = {
 	DDP_COMPONENT_OVL1_EXDMA6,
 	DDP_COMPONENT_OVL1_BLENDER5,
@@ -3579,6 +3616,37 @@ static const enum mtk_ddp_comp_id mt6991_mtk_ddp_main_bringup[] = {
 	DDP_COMPONENT_DLO_ASYNC0,	DDP_COMPONENT_DLI_ASYNC20,
 	DDP_COMPONENT_ODDMR0,		DDP_COMPONENT_DITHER2,
 	DDP_COMPONENT_POSTALIGN0,
+	DDP_COMPONENT_SPLITTER0_OUT_CB9,
+#endif
+	DDP_COMPONENT_COMP0_OUT_CB6,
+	DDP_COMPONENT_MERGE0_OUT_CB0,
+	DDP_COMPONENT_DSI0,
+	DDP_COMPONENT_VDISP_AO,
+#ifndef DRM_BYPASS_PQ
+	DDP_COMPONENT_CHIST0,	DDP_COMPONENT_CHIST1,
+#endif
+};
+
+static const enum mtk_ddp_comp_id mt6991_mtk_ddp_main_bypass_pc_bringup[] = {
+	DDP_COMPONENT_DLI_ASYNC0,
+	DDP_COMPONENT_PQ0_IN_CB0,
+#ifdef DRM_BYPASS_PQ
+	DDP_COMPONENT_PQ0_OUT_CB6,
+	DDP_COMPONENT_PANEL0_COMP_OUT_CB1,
+	DDP_COMPONENT_DLO_ASYNC1, DDP_COMPONENT_DLI_ASYNC21,
+	DDP_COMPONENT_SPLITTER0_IN_CB1,
+	DDP_COMPONENT_SPLITTER0_OUT_CB9,
+#else
+	DDP_COMPONENT_MDP_RSZ0,		DDP_COMPONENT_TDSHP0,
+	DDP_COMPONENT_CCORR0,		DDP_COMPONENT_COLOR0,
+	DDP_COMPONENT_C3D0,		DDP_COMPONENT_CCORR1,
+	DDP_COMPONENT_C3D1,		DDP_COMPONENT_DMDP_AAL0,
+	DDP_COMPONENT_AAL0,		DDP_COMPONENT_GAMMA0,
+	DDP_COMPONENT_POSTMASK0,	DDP_COMPONENT_DITHER0,
+	DDP_COMPONENT_PQ0_OUT_CB0,
+	DDP_COMPONENT_PANEL0_COMP_OUT_CB1,
+	DDP_COMPONENT_DLO_ASYNC1, DDP_COMPONENT_DLI_ASYNC21,
+	DDP_COMPONENT_SPLITTER0_IN_CB1,
 	DDP_COMPONENT_SPLITTER0_OUT_CB9,
 #endif
 	DDP_COMPONENT_COMP0_OUT_CB6,
@@ -5562,6 +5630,29 @@ static const struct mtk_crtc_path_data mt6991_mtk_main_path_data = {
 //	.scaling_data_dual = mt6989_scaling_main_dual,
 };
 
+static const struct mtk_crtc_path_data mt6991_mtk_main_bypass_pc_path_data  = {
+	.ovl_path[DDP_MAJOR][0] = mt6991_mtk_ovlsys_main_bringup,
+	.ovl_path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ovlsys_main_bringup),
+	.path[DDP_MAJOR][0] = mt6991_mtk_ddp_main_bypass_pc_bringup,
+	.path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ddp_main_bypass_pc_bringup),
+	.path_req_hrt[DDP_MAJOR][0] = true,
+//	.ovl_path[DDP_MINOR][0] = mt6991_mtk_ovlsys_main_bringup,
+//	.ovl_path_len[DDP_MINOR][0] = ARRAY_SIZE(mt6991_mtk_ovlsys_main_bringup),
+//	.path[DDP_MINOR][0] = mt6991_mtk_ddp_main_bringup_minor,
+//	.path_len[DDP_MINOR][0] = ARRAY_SIZE(mt6989_mtk_ddp_main_bringup_minor),
+//	.path_req_hrt[DDP_MINOR][0] = true,
+//	.dual_ovl_path[0] = mt6989_mtk_ovlsys_dual_main_bringup,
+//	.dual_ovl_path_len[0] = ARRAY_SIZE(mt6989_mtk_ovlsys_dual_main_bringup),
+//	.dual_path[0] = mt6989_mtk_ddp_dual_main_bringup,
+//	.dual_path_len[0] = ARRAY_SIZE(mt6989_mtk_ddp_dual_main_bringup),
+//	.wb_path[DDP_MAJOR] = mt6983_mtk_ddp_main_wb_path,
+//	.wb_path_len[DDP_MAJOR] = ARRAY_SIZE(mt6983_mtk_ddp_main_wb_path),
+	.addon_data = mt6991_addon_main,
+//	.addon_data_dual = mt6989_addon_main_dual,
+	.scaling_data = mt6991_scaling_main,
+//	.scaling_data_dual = mt6989_scaling_main_dual,
+};
+
 static const struct mtk_crtc_path_data mt6991_mtk_main_dual_path_data = {
 	.ovl_path[DDP_MAJOR][0] = mt6991_mtk_ovlsys_main_bringup_dual,
 	.ovl_path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ovlsys_main_bringup_dual),
@@ -5576,8 +5667,8 @@ static const struct mtk_crtc_path_data mt6991_mtk_main_dual_path_data = {
 static const struct mtk_crtc_path_data mt6991_mtk_main_bypass_pc_dual_path_data  = {
 	.ovl_path[DDP_MAJOR][0] = mt6991_mtk_ovlsys_main_bringup_dual,
 	.ovl_path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ovlsys_main_bringup_dual),
-	.path[DDP_MAJOR][0] = mt6991_mtk_ovlsys_main_bringup_dual,
-	.path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ovlsys_main_bringup_dual),
+	.path[DDP_MAJOR][0] = mt6991_mtk_ddp_main_bypass_pc_bringup,
+	.path_len[DDP_MAJOR][0] = ARRAY_SIZE(mt6991_mtk_ddp_main_bypass_pc_bringup),
 	.path_req_hrt[DDP_MAJOR][0] = true,
 	.addon_data = mt6991_addon_main,
 	.scaling_data = mt6991_scaling_main,
@@ -6710,7 +6801,9 @@ static const struct mtk_mmsys_driver_data mt6899_mmsys_driver_data = {
 
 static const struct mtk_mmsys_driver_data mt6991_mmsys_driver_data = {
 	.main_path_data = &mt6991_mtk_main_path_data,
+	.main_bypass_pc_path_data = &mt6991_mtk_main_bypass_pc_path_data,
 	.main_dual_path_data = &mt6991_mtk_main_dual_path_data,
+	.main_bypass_pc_dual_path_data = &mt6991_mtk_main_bypass_pc_dual_path_data,
 	.ext_alter_path_data = &mt6991_mtk_main_full_set_data,//temporary solution for OVL full set
 	.ext_path_data = &mt6991_mtk_ext_path_data,
 	.third_path_data = &mt6991_mtk_dp_w_tdshp_path_data,
@@ -9281,7 +9374,7 @@ static int mtk_drm_kms_init(struct drm_device *drm)
 	 * this value would be used to check framebuffer size limitation
 	 * at drm_mode_addfb().
 	 */
-	drm->mode_config.max_width = 4096;
+	drm->mode_config.max_width = 8192;
 	drm->mode_config.max_height = 4096;
 	drm->mode_config.funcs = &mtk_drm_mode_config_funcs;
 

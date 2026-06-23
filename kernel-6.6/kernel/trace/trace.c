@@ -2332,6 +2332,10 @@ struct saved_cmdlines_buffer {
 };
 static struct saved_cmdlines_buffer *savedcmd;
 
+/* Holds the size of a cmdline and pid element */
+#define SAVED_CMDLINE_MAP_ELEMENT_SIZE(s)			\
+	(TASK_COMM_LEN + sizeof((s)->map_cmdline_to_pid[0]))
+
 static inline char *get_saved_cmdlines(int idx)
 {
 	return &savedcmd->saved_cmdlines[idx * TASK_COMM_LEN];
@@ -2346,7 +2350,6 @@ static void free_saved_cmdlines_buffer(struct saved_cmdlines_buffer *s)
 {
 	int order = get_order(sizeof(*s) + s->cmdline_num * TASK_COMM_LEN);
 
-	kfree(s->map_cmdline_to_pid);
 	kmemleak_free(s);
 	free_pages((unsigned long)s, order);
 }
@@ -2359,7 +2362,7 @@ static struct saved_cmdlines_buffer *allocate_cmdlines_buffer(unsigned int val)
 	int order;
 
 	/* Figure out how much is needed to hold the given number of cmdlines */
-	orig_size = sizeof(*s) + val * TASK_COMM_LEN;
+	orig_size = sizeof(*s) + val * SAVED_CMDLINE_MAP_ELEMENT_SIZE(s);
 	order = get_order(orig_size);
 	size = 1 << (order + PAGE_SHIFT);
 	page = alloc_pages(GFP_KERNEL, order);
@@ -2371,16 +2374,11 @@ static struct saved_cmdlines_buffer *allocate_cmdlines_buffer(unsigned int val)
 	memset(s, 0, sizeof(*s));
 
 	/* Round up to actual allocation */
-	val = (size - sizeof(*s)) / TASK_COMM_LEN;
+	val = (size - sizeof(*s)) / SAVED_CMDLINE_MAP_ELEMENT_SIZE(s);
 	s->cmdline_num = val;
 
-	s->map_cmdline_to_pid = kmalloc_array(val,
-					      sizeof(*s->map_cmdline_to_pid),
-					      GFP_KERNEL);
-	if (!s->map_cmdline_to_pid) {
-		free_saved_cmdlines_buffer(s);
-		return NULL;
-	}
+	/* Place map_cmdline_to_pid array right after saved_cmdlines */
+	s->map_cmdline_to_pid = (unsigned *)&s->saved_cmdlines[val * TASK_COMM_LEN];
 
 	s->cmdline_idx = 0;
 	memset(&s->map_pid_to_cmdline, NO_CMDLINE_MAP,
@@ -3505,10 +3503,9 @@ out_nobuffer:
 }
 EXPORT_SYMBOL_GPL(trace_vbprintk);
 
-__printf(3, 0)
-static int
-__trace_array_vprintk(struct trace_buffer *buffer,
-		      unsigned long ip, const char *fmt, va_list args)
+static __printf(3, 0)
+int __trace_array_vprintk(struct trace_buffer *buffer,
+			  unsigned long ip, const char *fmt, va_list args)
 {
 	struct trace_event_call *call = &event_print;
 	struct ring_buffer_event *event;
@@ -3561,7 +3558,6 @@ out_nobuffer:
 	return len;
 }
 
-__printf(3, 0)
 int trace_array_vprintk(struct trace_array *tr,
 			unsigned long ip, const char *fmt, va_list args)
 {
@@ -3591,7 +3587,6 @@ int trace_array_vprintk(struct trace_array *tr,
  * Note, trace_array_init_printk() must be called on @tr before this
  * can be used.
  */
-__printf(3, 0)
 int trace_array_printk(struct trace_array *tr,
 		       unsigned long ip, const char *fmt, ...)
 {
@@ -3636,7 +3631,6 @@ int trace_array_init_printk(struct trace_array *tr)
 }
 EXPORT_SYMBOL_GPL(trace_array_init_printk);
 
-__printf(3, 4)
 int trace_array_printk_buf(struct trace_buffer *buffer,
 			   unsigned long ip, const char *fmt, ...)
 {
@@ -3652,7 +3646,6 @@ int trace_array_printk_buf(struct trace_buffer *buffer,
 	return ret;
 }
 
-__printf(2, 0)
 int trace_vprintk(unsigned long ip, const char *fmt, va_list args)
 {
 	return trace_array_vprintk(&global_trace, ip, fmt, args);
@@ -5349,6 +5342,9 @@ tracing_cpumask_write(struct file *filp, const char __user *ubuf,
 	cpumask_var_t tracing_cpumask_new;
 	int err;
 
+	if (count == 0 || count > KMALLOC_MAX_SIZE)
+		return -EINVAL;
+
 	if (!zalloc_cpumask_var(&tracing_cpumask_new, GFP_KERNEL))
 		return -ENOMEM;
 
@@ -5775,6 +5771,7 @@ static const char readme_msg[] =
 	"\t           $stack<index>, $stack, $retval, $comm,\n"
 #endif
 	"\t           +|-[u]<offset>(<fetcharg>), \\imm-value, \\\"imm-string\"\n"
+	"\t     kernel return probes support: $retval, $arg<N>, $comm\n"
 	"\t     type: s8/16/32/64, u8/16/32/64, x8/16/32/64, char, string, symbol,\n"
 	"\t           b<bit-width>@<bit-offset>/<container-size>, ustring,\n"
 	"\t           symstr, <type>\\[<array-size>\\]\n"
@@ -7150,13 +7147,14 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
 		/* Copy the data into the page, so we can start over. */
 		ret = trace_seq_to_buffer(&iter->seq,
 					  page_address(spd.pages[i]),
-					  trace_seq_used(&iter->seq));
+					  min((size_t)trace_seq_used(&iter->seq),
+						  PAGE_SIZE));
 		if (ret < 0) {
 			__free_page(spd.pages[i]);
 			break;
 		}
 		spd.partial[i].offset = 0;
-		spd.partial[i].len = trace_seq_used(&iter->seq);
+		spd.partial[i].len = ret;
 
 		trace_seq_init(&iter->seq);
 	}
@@ -9540,16 +9538,19 @@ static int trace_array_create_dir(struct trace_array *tr)
 	return ret;
 }
 
-static struct trace_array *trace_array_create(const char *name)
+static struct trace_array *
+trace_array_create_systems(const char *name, const char *systems)
 {
+	struct trace_array_ext *tr_ext;
 	struct trace_array *tr;
 	int ret;
 
 	ret = -ENOMEM;
-	tr = kzalloc(sizeof(*tr), GFP_KERNEL);
-	if (!tr)
+	tr_ext = kzalloc(sizeof(*tr_ext), GFP_KERNEL);
+	if (!tr_ext)
 		return ERR_PTR(ret);
 
+	tr = &tr_ext->trace_array;
 	tr->name = kstrdup(name, GFP_KERNEL);
 	if (!tr->name)
 		goto out_free_tr;
@@ -9559,6 +9560,12 @@ static struct trace_array *trace_array_create(const char *name)
 
 	if (!zalloc_cpumask_var(&tr->pipe_cpumask, GFP_KERNEL))
 		goto out_free_tr;
+
+	if (systems) {
+		tr_ext->system_names = kstrdup_const(systems, GFP_KERNEL);
+		if (!tr_ext->system_names)
+			goto out_free_tr;
+	}
 
 	tr->trace_flags = global_trace.trace_flags & ~ZEROED_TRACE_FLAGS;
 
@@ -9603,10 +9610,16 @@ static struct trace_array *trace_array_create(const char *name)
 	free_trace_buffers(tr);
 	free_cpumask_var(tr->pipe_cpumask);
 	free_cpumask_var(tr->tracing_cpumask);
+	kfree_const(tr_ext->system_names);
 	kfree(tr->name);
-	kfree(tr);
+	kfree(tr_ext);
 
 	return ERR_PTR(ret);
+}
+
+static struct trace_array *trace_array_create(const char *name)
+{
+	return trace_array_create_systems(name, NULL);
 }
 
 static int instance_mkdir(const char *name)
@@ -9631,9 +9644,27 @@ out_unlock:
 	return ret;
 }
 
+const char *trace_array_get_system_names(struct trace_array *tr)
+{
+	struct trace_array_ext *tr_ext;
+
+	if (tr == &global_trace)
+		return NULL;
+
+	tr_ext = container_of(tr, struct trace_array_ext, trace_array);
+	return tr_ext->system_names;
+}
+
+struct trace_array *trace_array_get_by_name(const char *name)
+{
+	return trace_array_get_by_name_ext(name, NULL);
+}
+EXPORT_SYMBOL_GPL(trace_array_get_by_name);
+
 /**
- * trace_array_get_by_name - Create/Lookup a trace array, given its name.
+ * trace_array_get_by_name_ext - Create/Lookup a trace array, given its name.
  * @name: The name of the trace array to be looked up/created.
+ * @systems: A list of systems to create event directories for (NULL for all)
  *
  * Returns pointer to trace array with given name.
  * NULL, if it cannot be created.
@@ -9647,7 +9678,8 @@ out_unlock:
  * trace_array_put() is called, user space can not delete it.
  *
  */
-struct trace_array *trace_array_get_by_name(const char *name)
+struct trace_array *trace_array_get_by_name_ext(const char *name,
+						const char *systems)
 {
 	struct trace_array *tr;
 
@@ -9659,7 +9691,7 @@ struct trace_array *trace_array_get_by_name(const char *name)
 			goto out_unlock;
 	}
 
-	tr = trace_array_create(name);
+	tr = trace_array_create_systems(name, systems);
 
 	if (IS_ERR(tr))
 		tr = NULL;
@@ -9671,11 +9703,14 @@ out_unlock:
 	mutex_unlock(&event_mutex);
 	return tr;
 }
-EXPORT_SYMBOL_GPL(trace_array_get_by_name);
+EXPORT_SYMBOL_GPL(trace_array_get_by_name_ext);
 
 static int __remove_instance(struct trace_array *tr)
 {
 	int i;
+	struct trace_array_ext *tr_ext = container_of(tr,
+						      struct trace_array_ext,
+						      trace_array);
 
 	/* Reference counter for a newly created trace array = 1. */
 	if (tr->ref > 1 || (tr->current_trace && tr->trace_ref))
@@ -9706,8 +9741,9 @@ static int __remove_instance(struct trace_array *tr)
 
 	free_cpumask_var(tr->pipe_cpumask);
 	free_cpumask_var(tr->tracing_cpumask);
+	kfree_const(tr_ext->system_names);
 	kfree(tr->name);
-	kfree(tr);
+	kfree(tr_ext);
 
 	return 0;
 }

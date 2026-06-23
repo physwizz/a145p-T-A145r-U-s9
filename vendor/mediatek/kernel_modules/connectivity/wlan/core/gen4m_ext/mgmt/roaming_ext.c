@@ -24,9 +24,7 @@
 
 #include "precomp.h"
 #include "gl_os.h"
-#include "gl_kal.h"
 #include "gl_wext_priv.h"
-#include "wlan_def.h"
 #if CFG_ENABLE_WIFI_DIRECT
 #include "gl_p2p_os.h"
 #endif
@@ -35,7 +33,8 @@
  *                              C O N S T A N T S
  *******************************************************************************
  */
-#define FW_CFG_KEY_ROAM_RCPI			"RoamingRCPIValue"
+#define FW_CFG_KEY_ROAM_RCPI		"RoamingRCPIValue"
+#define BTM_MIN_RSSI			-75
 
 /*******************************************************************************
  *                             D A T A   T Y P E S
@@ -99,6 +98,15 @@ struct PARAM_MANAGE_CHANNEL_LIST {
  *******************************************************************************
  */
 #if (CFG_EXT_ROAMING == 1)
+static uint8_t *apucBandStr[BAND_NUM] = {
+	(uint8_t *) DISP_STRING("NULL"),
+	(uint8_t *) DISP_STRING("2.4G"),
+	(uint8_t *) DISP_STRING("5G"),
+#if (CFG_SUPPORT_WIFI_6G == 1)
+	(uint8_t *) DISP_STRING("6G")
+#endif
+};
+
 #if (CFG_SUPPORT_APS == 1)
 extern uint8_t apsGetCuInfo(struct ADAPTER *ad,
 	struct BSS_DESC *bss,
@@ -294,8 +302,10 @@ uint8_t apsIsGoodRCPI(struct ADAPTER *ad,
 	uint8_t bidx)
 {
 	struct BSS_INFO *prAisBssInfo;
+	struct BSS_TRANSITION_MGT_PARAM *prBtmParam;
 
 	prAisBssInfo = aisGetAisBssInfo(ad, bidx);
+	prBtmParam = aisGetBTMParam(ad, bidx);
 
 	/* check min RCPI */
 	if ((prAisBssInfo->eConnectionState == MEDIA_STATE_CONNECTED ||
@@ -325,6 +335,19 @@ uint8_t apsIsGoodRCPI(struct ADAPTER *ad,
 					MACSTR " BTCoex low rssi %d < %d\n",
 					MAC2STR(bss->aucBSSID),
 					r2, ad->rWifiVar.ucRBTCDelta);
+				return FALSE;
+			}
+			break;
+		}
+		case ROAMING_REASON_BTM:
+		{
+			if ((prBtmParam->ucRequestMode &
+				WNM_BSS_TM_REQ_DISASSOC_IMMINENT) &&
+			    (r2 < BTM_MIN_RSSI)) {
+				DBGLOG(APS, WARN,
+					MACSTR " BTM low rssi %d < %d\n",
+					MAC2STR(bss->aucBSSID),
+					r2, BTM_MIN_RSSI);
 				return FALSE;
 			}
 			break;
@@ -371,6 +394,9 @@ uint8_t apsIsBssQualify(struct ADAPTER *ad, struct BSS_DESC *bss,
 
 	if (!apsIsGoodRCPI(ad, bss, eRoamReason, bidx))
 		return FALSE;
+
+	if (ad->rNchoInfo.fgNCHOEnabled)
+		return TRUE;
 
 	/* check min score */
 	switch (eRoamReason) {
@@ -622,7 +648,7 @@ uint32_t assocCalculateRoamReasonLen(
 
 	ucBssIndex = prStaRec->ucBssIndex;
 	prAisSpecificBssInfo = aisGetAisSpecBssInfo(prAdapter, ucBssIndex);
-	if (IS_STA_IN_AIS(prAdapter, prStaRec) && prStaRec->fgIsReAssoc &&
+	if (IS_STA_IN_AIS(prStaRec) && prStaRec->fgIsReAssoc &&
 	    prAisSpecificBssInfo->fgRoamingReasonEnable)
 		return sizeof(struct IE_ASSURANCE_ROAMING_REASON);
 
@@ -653,7 +679,7 @@ void assocGenerateRoamReason(
 	prRoamingFsmInfo = aisGetRoamingInfo(prAdapter, ucBssIndex);
 	prAisBssInfo = aisGetAisBssInfo(prAdapter, ucBssIndex);
 
-	if (IS_STA_IN_AIS(prAdapter, prStaRec) && prStaRec->fgIsReAssoc &&
+	if (IS_STA_IN_AIS(prStaRec) && prStaRec->fgIsReAssoc &&
 	    prAisSpecificBssInfo->fgRoamingReasonEnable) {
 		struct IE_ASSURANCE_ROAMING_REASON *ie =
 			(struct IE_ASSURANCE_ROAMING_REASON *) pucBuffer;
@@ -719,7 +745,7 @@ wlanoidSetDisconnectIes(struct ADAPTER *prAdapter,
 		prAdapter->u4DeauthIeFromUpperLength = u4SetBufferLen;
 		kalMemCopy(prAdapter->aucDeauthIeFromUpper,
 			pvSetBuffer, u4SetBufferLen);
-		DBGLOG_MEM8(REQ, DEBUG, (uint8_t *)
+		DBGLOG_MEM8(REQ, INFO, (uint8_t *)
 			prAdapter->aucDeauthIeFromUpper, u4SetBufferLen);
 		rStatus = WLAN_STATUS_SUCCESS;
 	}
@@ -1809,7 +1835,7 @@ wlanoidSetNchoBand(struct ADAPTER *prAdapter,
 	}
 	prAdapter->rNchoInfo.eCongfigBand = *pParam;
 
-	DBGLOG(INIT, DEBUG, "NCHO enabled:%d ,band:%d,status:%d\n"
+	DBGLOG(INIT, INFO, "NCHO enabled:%d ,band:%d,status:%d\n"
 	       , prAdapter->rNchoInfo.fgNCHOEnabled, *pParam, rStatus);
 
 	/* Execute disconnect process if current band is not equal to config */
@@ -1964,7 +1990,7 @@ wlanoidSetNchoEnable(struct ADAPTER *prAdapter,
 	if (rStatus == WLAN_STATUS_SUCCESS) {
 		wlanNchoInit(prAdapter, FALSE);
 		prAdapter->rNchoInfo.fgNCHOEnabled = *pParam;
-		DBGLOG(INIT, DEBUG, "NCHO enable is %d\n", *pParam);
+		DBGLOG(INIT, INFO, "NCHO enable is %d\n", *pParam);
 
 #if (CFG_SUPPORT_CONN_LOG == 1)
 		kalSprintf(aucLog, "[NCHO] MODE enable=%d", *pParam);
@@ -2183,7 +2209,7 @@ wlanoidSetRoamTrigger(
 	rStatus = wlanSetFWRssiTrigger(prAdapter,
 		FW_CFG_KEY_ROAM_RCPI, *pi4Param);
 	if (rStatus == WLAN_STATUS_SUCCESS)
-		DBGLOG(INIT, DEBUG, "roam trigger is %d\n", *pi4Param);
+		DBGLOG(INIT, INFO, "roam trigger is %d\n", *pi4Param);
 
 	return rStatus;
 }
@@ -2290,7 +2316,7 @@ void aisFsmNotifyManageChannelList(
 	ais = aisGetAisSpecBssInfo(prAdapter, ucBssIndex);
 	conn = aisGetConnSettings(prAdapter, ucBssIndex);
 
-	essChnlNum = kal_min_t(uint8_t, ais->ucCurEssChnlInfoNum, 30);
+	essChnlNum = KAL_MIN((int)ais->ucCurEssChnlInfoNum, 30);
 	size = sizeof(struct PARAM_MANAGE_CHANNEL_LIST) +
 		essChnlNum * sizeof(uint32_t);
 	list = kalMemAlloc(size, VIR_MEM_TYPE);
@@ -2580,7 +2606,7 @@ uint32_t wlanSetEssBandBitmap(
 	if (status != WLAN_STATUS_SUCCESS)
 		DBGLOG(INIT, WARN, "set Ess band bitmap fail %d\n", status);
 	else
-		DBGLOG(INIT, DEBUG, "set Ess band bitmap success [%d]\n",
+		DBGLOG(INIT, INFO, "set Ess band bitmap success [%d]\n",
 				   ucEssBandBitMap);
 
 	return status;
@@ -2595,7 +2621,6 @@ void roamingFsmSetSingleScanCadence(struct ADAPTER *prAdapter,
 	prRoamingInfo = aisGetRoamingInfo(prAdapter, ucBssIndex);
 	if (!prRoamingInfo)
 		return;
-
 	prScanCadence = &prRoamingInfo->rScanCadence;
 
 	switch (prRoamingInfo->eReason) {
@@ -2609,6 +2634,7 @@ void roamingFsmSetSingleScanCadence(struct ADAPTER *prAdapter,
 		break;
 	}
 	case ROAMING_REASON_SCAN_SINGLE_TIMER:
+	case ROAMING_REASON_INACTIVE_TIMER:
 	{
 		if (prScanCadence->ucFullScanCount == 0) {
 			/* <2> Configure a inactive timer */
@@ -2619,11 +2645,14 @@ void roamingFsmSetSingleScanCadence(struct ADAPTER *prAdapter,
 		}
 		return;
 	}
-	default:
+	case ROAMING_REASON_IDLE:
+	case ROAMING_REASON_BT_COEX:
 	{
 		DBGLOG(ROAMING, INFO, "No target found, ending roaming\n");
 		return;
 	}
+	default:
+		return;
 	}
 
 	DBGLOG(ROAMING, INFO,
@@ -2666,7 +2695,6 @@ void roamingFsmRunScanTimerTimeout(struct ADAPTER *prAdapter,
 	rRoamingData.eReason =
 	    prScanCadence->ucScanSource == ROAMING_SCAN_SINGLE_TIMER ?
 	    ROAMING_REASON_SCAN_SINGLE_TIMER : ROAMING_REASON_INACTIVE_TIMER;
-
 	rRoamingData.u2Data = prBssDesc->ucRCPI;
 	rRoamingData.u2RcpiLowThreshold = prRoamingFsmInfo->ucThreshold;
 	rRoamingData.ucBssidx = ucBssIndex;
@@ -2679,30 +2707,22 @@ uint8_t roamingFsmScheduleNextSearch(struct ADAPTER *prAdapter,
 {
 	struct ROAMING_INFO *prRoamingInfo = NULL;
 	struct AIS_FSM_INFO *prAisFsmInfo;
+	enum ENUM_ROAMING_REASON eReason;
 
 	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 	prRoamingInfo = aisGetRoamingInfo(prAdapter, ucBssIndex);
 	if (!prRoamingInfo)
 		return TRUE;
+	eReason = prRoamingInfo->eReason;
 
-	/* If meet the conditions, do the full scan */
-	if (prRoamingInfo->eReason == ROAMING_REASON_POOR_RCPI ||
-	    prRoamingInfo->eReason == ROAMING_REASON_HIGH_CU) {
-		if (prRoamingInfo->rScanCadence.fgIsInitialConn == TRUE &&
-		    prRoamingInfo->rScanCadence.ucFullScanCount == 0)
-			return TRUE;
-		else
-			return FALSE;
-	}
-
-	/* Only scan one time */
-	if (prRoamingInfo->eReason == ROAMING_REASON_SCAN_SINGLE_TIMER ||
-	    prRoamingInfo->eReason == ROAMING_REASON_INACTIVE_TIMER ||
-	    prRoamingInfo->eReason == ROAMING_REASON_IDLE ||
-	    prRoamingInfo->eReason == ROAMING_REASON_BT_COEX)
+	if (eReason == ROAMING_REASON_POOR_RCPI ||
+	    eReason == ROAMING_REASON_HIGH_CU ||
+	    eReason == ROAMING_REASON_SCAN_SINGLE_TIMER ||
+	    eReason == ROAMING_REASON_INACTIVE_TIMER ||
+	    eReason == ROAMING_REASON_IDLE ||
+	    eReason == ROAMING_REASON_BT_COEX)
 		return FALSE;
 
-	/* Already do full scan */
 	if (!prAisFsmInfo->fgTargetChnlScanIssued)
 		return FALSE;
 
@@ -2725,6 +2745,47 @@ void roamingFsmInitScanTimer(struct ADAPTER *prAdapter,
 
 	DBGLOG(ROAMING, INFO,
 		"Initialize roaming related values\n");
+}
+
+void aisRoamNeedPartialScan(
+	struct ADAPTER *prAdapter,
+	uint8_t ucBssIndex,
+	uint8_t *doPartialScan)
+{
+	struct AIS_FSM_INFO *ais = NULL;
+	struct ROAMING_INFO *roam = NULL;
+	struct BSS_TRANSITION_MGT_PARAM *prBtmReq;
+	struct WTC_MODE_INFO *prWtc;
+	uint8_t postponing = FALSE;
+
+	ais = aisGetAisFsmInfo(prAdapter, ucBssIndex);
+	roam = aisGetRoamingInfo(prAdapter, ucBssIndex);
+	postponing = aisFsmIsInProcessPostpone(prAdapter, ucBssIndex);
+	prBtmReq = aisGetBTMParam(prAdapter, ucBssIndex);
+	prWtc = &prAdapter->rWtcModeInfo;
+
+	if (roam->eReason == ROAMING_REASON_BTM && prBtmReq->ucIsCisco) {
+		if (prWtc->ucScanMode == 1)
+			*doPartialScan = TRUE;
+		else if (prWtc->ucScanMode > 1)
+			*doPartialScan = FALSE;
+	} else if (roam->eReason == ROAMING_REASON_IDLE) {
+		*doPartialScan = FALSE;
+	} else if (roam->eReason == ROAMING_REASON_BT_COEX) {
+		*doPartialScan = TRUE;
+	} else if (roam->eReason == ROAMING_REASON_SCAN_SINGLE_TIMER) {
+		*doPartialScan = TRUE;
+	} else if (roam->eReason == ROAMING_REASON_INACTIVE_TIMER) {
+		*doPartialScan = FALSE;
+	}
+
+#if CFG_SUPPORT_LLW_SCAN
+	/* If CRT DATA is 2, prohibit full roaming scan
+	 * even if fgTargetChnlScanIssued is FALSE.
+	 */
+	if (ais->ucLatencyCrtDataMode == 2)
+		*doPartialScan = TRUE;
+#endif
 }
 
 void roamingDumpConfig(struct ADAPTER *prAdapter,

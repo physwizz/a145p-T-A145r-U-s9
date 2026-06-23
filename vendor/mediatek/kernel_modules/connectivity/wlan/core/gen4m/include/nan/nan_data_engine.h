@@ -812,8 +812,8 @@ uint32_t nanDeviceCapabilityAttrHandler(
 	struct _NAN_ATTR_DEVICE_CAPABILITY_T *prDeviceCapabilityAttr,
 	struct _NAN_NDL_INSTANCE_T *prNDL);
 
-uint32_t nanAvailabilityAttrHandler(
-	struct ADAPTER *prAdapter, enum _NAN_ACTION_T eNanAction,
+uint32_t nanAvailabilityAttrHandler(struct ADAPTER *prAdapter,
+	enum _NAN_ACTION_T eNanAction,
 	struct _NAN_ATTR_NAN_AVAILABILITY_T *prAvailabilityAttr,
 	struct _NAN_NDL_INSTANCE_T *prNDL,
 	struct _NAN_NDP_INSTANCE_T *prNDP);
@@ -1018,6 +1018,30 @@ void nanDataEngineSharedKeyAttrAppend(struct ADAPTER *prAdapter,
 				      struct _NAN_NDL_INSTANCE_T *prNDL,
 				      struct _NAN_NDP_INSTANCE_T *prNDP);
 
+#if CFG_SUPPORT_NAN_EXT
+uint16_t
+nanDataEngineVendorAttrLength(struct ADAPTER *prAdapter,
+				 struct _NAN_NDL_INSTANCE_T *prNDL,
+				 struct _NAN_NDP_INSTANCE_T *prNDP);
+
+void nanDataEngineVendorAttrAppend(struct ADAPTER *prAdapter,
+				      struct MSDU_INFO *prMsduInfo,
+				      struct _NAN_NDL_INSTANCE_T *prNDL,
+				      struct _NAN_NDP_INSTANCE_T *prNDP);
+
+#if (CFG_SUPPORT_NAN_11BE == 1)
+uint16_t
+nanDataEngineVendorEhtAttrLength(struct ADAPTER *prAdapter,
+				 struct _NAN_NDL_INSTANCE_T *prNDL,
+				 struct _NAN_NDP_INSTANCE_T *prNDP);
+
+void nanDataEngineVendorEhtAttrAppend(struct ADAPTER *prAdapter,
+				      struct MSDU_INFO *prMsduInfo,
+				      struct _NAN_NDL_INSTANCE_T *prNDL,
+				      struct _NAN_NDP_INSTANCE_T *prNDP);
+#endif
+#endif
+
 uint16_t
 nanDataEngineNDPEAttrLength(struct ADAPTER *prAdapter,
 			    struct _NAN_NDL_INSTANCE_T *prNDL,
@@ -1164,6 +1188,5 @@ nanDataEngineSetupStaRec(struct ADAPTER *prAdapter,
 			 struct STA_RECORD *prStaRec);
 
 const char *nanActionFrameOuiString(uint8_t subtype);
-
 #endif
 #endif

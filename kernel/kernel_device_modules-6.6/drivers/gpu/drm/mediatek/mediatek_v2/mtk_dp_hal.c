@@ -2529,8 +2529,10 @@ void mhal_DPTx_PhyCheckReady(struct mtk_dp *mtk_dp, u8 lane_count)
 	case 4:
 		phyd_rdy_bmp |= (RGS_TX_LN3_READY_FLDMASK |
 				RGS_TX_LN2_READY_FLDMASK);
+		break;
 	case 2:
 		phyd_rdy_bmp |= RGS_TX_LN1_READY_FLDMASK;
+		break;
 	default:
 		break;
 	}
@@ -3606,4 +3608,9 @@ void mhal_DPTx_PhyTrainingConfig(struct mtk_dp *mtk_dp, u8 ubTargetLinkRate, u8 
 	mhal_DPTx_PhyCheckReady(mtk_dp, ubTargetLaneCount);
 }
 
+
+void mhal_DPTx_Set_Audio_N_Half(struct mtk_dp *mtk_dp)
+{
+	msWrite2Byte(mtk_dp, REG_3058_DP_ENCODER0_P0, 0X4000 & 0xFFFF);
+}
 

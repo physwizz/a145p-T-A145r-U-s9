@@ -8288,8 +8288,8 @@ void wlanInitFeatureOption(IN struct ADAPTER *prAdapter)
 		prAdapter, "SinglePMK", FEATURE_ENABLED);
 	u4MinValue = 0;
 	u4MaxValue = 100;
-	prWifiVar->ucRCMinRoamDetla = (uint8_t) wlanCfgGetUint32Range(
-		prAdapter, "RoamCommon_MinRoamDetla", 15,
+	prWifiVar->ucRCMinRoamDelta = (uint8_t) wlanCfgGetUint32Range(
+		prAdapter, "RoamCommon_MinRoamDelta", 15,
 		&u4MinValue, &u4MaxValue);
 	u4MinValue = 0;
 	u4MaxValue = 30;

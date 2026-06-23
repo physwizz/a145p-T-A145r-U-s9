@@ -3160,6 +3160,7 @@ int mtk_cfg80211_vendor_trigger_reset(
  * \retval 0 Success.
  */
 /*----------------------------------------------------------------------------*/
+#if CFG_SUPPORT_USABLE_CHANNEL
 int mtk_cfg80211_vendor_get_usable_channel(
 	struct wiphy *wiphy, struct wireless_dev *wdev,
 	const void *data, int data_len)
@@ -3415,6 +3416,7 @@ end:
 	kfree_skb(skb);
 	return i4Status;
 }
+#endif
 
 /*----------------------------------------------------------------------------*/
 /*!

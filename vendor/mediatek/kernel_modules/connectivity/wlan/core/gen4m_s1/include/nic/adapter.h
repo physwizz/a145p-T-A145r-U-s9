@@ -1321,7 +1321,7 @@ struct WIFI_VAR {
 	u_int8_t ucSAEAuthNoResp;
 	u_int8_t ucSinglePMK;
 #if (CFG_TC10_FEATURE == 1)
-	uint8_t ucRCMinRoamDetla;
+	uint8_t ucRCMinRoamDelta;
 	uint8_t ucRCDelta;
 	uint8_t ucRIDelta;
 	int8_t cRBMinRssi;

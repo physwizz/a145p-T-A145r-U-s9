@@ -2261,11 +2261,6 @@ static int upm6720_charger_probe(struct i2c_client *client)
 
     upm->resume_completed = true;
     upm->irq_waiting = false;
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 start*/
-    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_UPM6720);
-    #endif
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 end*/
     ret = upm6720_detect_device(upm);
     if (ret) {
         upm_err("No upm6720 device found!\n");
@@ -2330,6 +2325,11 @@ static int upm6720_charger_probe(struct i2c_client *client)
     g_gxy_cp_ops.get_otg_txmode = upm6720_usbpd_get_otg_txmode;
     upm->otg_tx_mode = false;
     /*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
+    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_UPM6720);
+    #endif
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
     upm_info("upm6720 probe successfully, Part Num:%d\n!",
                 upm->part_no);
 

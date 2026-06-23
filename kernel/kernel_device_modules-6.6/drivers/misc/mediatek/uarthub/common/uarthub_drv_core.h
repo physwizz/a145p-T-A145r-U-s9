@@ -70,6 +70,8 @@ struct uarthub_gpio_trx_info {
 	struct uarthub_gpio_base_addr rx_mode;
 	struct uarthub_gpio_base_addr tx_dir;
 	struct uarthub_gpio_base_addr rx_dir;
+	struct uarthub_gpio_base_addr tx_dataout;
+	struct uarthub_gpio_base_addr rx_dataout;
 	struct uarthub_gpio_base_addr tx_ies;
 	struct uarthub_gpio_base_addr rx_ies;
 	struct uarthub_gpio_base_addr tx_pu;
@@ -87,6 +89,11 @@ struct uarthub_gpio_trx_info {
 	struct uarthub_gpio_base_addr tx_sec_en;
 	struct uarthub_gpio_base_addr rx_sec_en;
 	struct uarthub_gpio_base_addr rx_din;
+	struct uarthub_gpio_base_addr bt_rst_mode;
+	struct uarthub_gpio_base_addr bt_rst_dir;
+	struct uarthub_gpio_base_addr bt_rst_dataout;
+	struct uarthub_gpio_base_addr bt_rst_pu;
+	struct uarthub_gpio_base_addr bt_rst_pd;
 };
 
 typedef void (*UARTHUB_CORE_IRQ_CB) (unsigned int err_type);
@@ -218,6 +225,7 @@ typedef int(*UARTHUB_PLAT_CLEAR_HOST_TRX_REQUEST) (int dev_index, enum uarthub_t
 typedef int(*UARTHUB_PLAT_GET_HOST_BYTE_CNT) (int dev_index, enum uarthub_trx_type trx);
 typedef int(*UARTHUB_PLAT_GET_CMM_BYTE_CNT) (enum uarthub_trx_type trx);
 typedef int(*UARTHUB_PLAT_CONFIG_CRC_CTRL) (int enable);
+typedef int(*UARTHUB_PLAT_CONFIG_FEEDBACK_TX_HOST_AWAKE_STA_EN_CTRL) (int enable);
 typedef int(*UARTHUB_PLAT_CONFIG_BYPASS_CTRL) (int enable);
 typedef int(*UARTHUB_PLAT_CONFIG_HOST_FIFOE_CTRL) (int dev_index, int enable);
 typedef int(*UARTHUB_PLAT_GET_RX_ERROR_CRC_INFO) (
@@ -282,6 +290,7 @@ struct uarthub_core_ops_struct {
 	UARTHUB_PLAT_GET_HOST_BYTE_CNT uarthub_plat_get_host_byte_cnt;
 	UARTHUB_PLAT_GET_CMM_BYTE_CNT uarthub_plat_get_cmm_byte_cnt;
 	UARTHUB_PLAT_CONFIG_CRC_CTRL uarthub_plat_config_crc_ctrl;
+	UARTHUB_PLAT_CONFIG_FEEDBACK_TX_HOST_AWAKE_STA_EN_CTRL uarthub_plat_config_feedback_tx_host_awake_sta_en_ctrl;
 	UARTHUB_PLAT_CONFIG_BYPASS_CTRL uarthub_plat_config_bypass_ctrl;
 	UARTHUB_PLAT_CONFIG_HOST_FIFOE_CTRL uarthub_plat_config_host_fifoe_ctrl;
 	UARTHUB_PLAT_GET_RX_ERROR_CRC_INFO uarthub_plat_get_rx_error_crc_info;

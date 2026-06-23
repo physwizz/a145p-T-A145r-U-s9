@@ -546,6 +546,11 @@ done:
 		chr_err("Be in store_mode,FCC set to be 500mA\r\n");
 		is_basic = true;
 	}
+	/*A06_V code for AL7160AV-528 by shanxinkai at 20250611 start*/
+	#if IS_ENABLED(CONFIG_CHARGER_CP_PPS)
+	g_cp_charging_lmt.cp_ss_stop_chg = info->gxy_discharge_store_mode;
+	#endif
+	/*A06_V code for AL7160AV-528 by shanxinkai at 20250611 end*/
 	#endif
 	/*A06_V code for SR-AL7160V-01-455 by yexuedong at 20240912 end*/
 

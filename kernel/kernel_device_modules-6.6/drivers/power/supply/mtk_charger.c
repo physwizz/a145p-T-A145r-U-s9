@@ -4423,6 +4423,7 @@ static const enum power_supply_property charger_psy_properties[] = {
 	POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT,
 	POWER_SUPPLY_PROP_VOLTAGE_BOOT,
 	POWER_SUPPLY_PROP_USB_TYPE,
+	POWER_SUPPLY_PROP_CHARGE_NOW,
 };
 
 static int psy_charger_get_property(struct power_supply *psy,

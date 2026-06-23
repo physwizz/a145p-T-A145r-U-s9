@@ -517,6 +517,7 @@ exit:
     return retval;
 }
 
+/*A14V code for P250903-00794 by yuli at 20250908 start*/
 static int ovt_tcm_spi_write(struct ovt_tcm_hcd *tcm_hcd, unsigned char *data,
         unsigned int length)
 {
@@ -524,48 +525,42 @@ static int ovt_tcm_spi_write(struct ovt_tcm_hcd *tcm_hcd, unsigned char *data,
     unsigned int idx;
     struct spi_message msg;
     struct spi_device *spi = to_spi_device(tcm_hcd->pdev->dev.parent);
-    const struct ovt_tcm_board_data *bdata = tcm_hcd->hw_if->bdata;
+
+    static int byte_num = 32;  //32K
+    int xfer_length = 0;
 
     mutex_lock(&tcm_hcd->io_ctrl_mutex);
 
+retry_package:
     spi_message_init(&msg);
-
-    if (bdata->byte_delay_us == 0)
-        retval = ovt_tcm_spi_alloc_mem(tcm_hcd, 1, 0);
-    else
-        retval = ovt_tcm_spi_alloc_mem(tcm_hcd, length, 0);
+    xfer_length = length / (byte_num * 1024) + 1;
+    retval = ovt_tcm_spi_alloc_mem(tcm_hcd, xfer_length, 0);
     if (retval < 0) {
         LOGE(&spi->dev,
                 "Failed to allocate memory\n");
         goto exit;
     }
 
-    if (bdata->byte_delay_us == 0) {
-        xfer[0].len = length;
-        xfer[0].tx_buf = data;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
-        if (bdata->block_delay_us)
-            xfer[0].delay_usecs = bdata->block_delay_us;
-#endif
-        spi_message_add_tail(&xfer[0], &msg);
-    } else {
-        for (idx = 0; idx < length; idx++) {
-            xfer[idx].len = 1;
-            xfer[idx].tx_buf = &data[idx];
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
-            xfer[idx].delay_usecs = bdata->byte_delay_us;
-            if (bdata->block_delay_us && (idx == length - 1))
-                xfer[idx].delay_usecs = bdata->block_delay_us;
-#endif
-            spi_message_add_tail(&xfer[idx], &msg);
-        }
+    for (idx = 0; (idx + 1) * byte_num * 1024 < length; idx++) {
+        xfer[idx].len = byte_num * 1024;
+        xfer[idx].tx_buf = &data[idx * byte_num * 1024];
+        spi_message_add_tail(&xfer[idx], &msg);
     }
+
+    LOGE(&spi->dev, "ovt_tcm_spi_write, byte_num=%d, length=%d, idx=%d\n", byte_num, length, idx);
+    xfer[idx].len = length - (byte_num * 1024) * (idx);
+    xfer[idx].tx_buf = &data[idx * byte_num * 1024];
+    spi_message_add_tail(&xfer[idx], &msg);
 
     retval = spi_sync(spi, &msg);
     if (retval == 0) {
         retval = length;
     } else {
+        byte_num /= 2;
+        if (byte_num >= 4) {
+            LOGE(&spi->dev, "ovt_tcm_spi_write,retry_package byte_num=%d\n", byte_num);
+            goto retry_package;
+        }
         LOGE(&spi->dev,
                 "Failed to complete SPI transfer, error = %d\n",
                 retval);
@@ -576,6 +571,7 @@ exit:
 
     return retval;
 }
+/*A14V code for P250903-00794 by yuli at 20250908 end*/
 
 struct spi_delay cs_setup_delay = {
     .value = 6,

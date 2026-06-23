@@ -2013,7 +2013,7 @@ static int sgm415xx_enable_port_charging(struct charger_device *chg_dev, bool en
 
     if (enable) {
         ret = sgm415xx_exit_hiz_mode(sgm);
-        /*A06_V code for P250428-09126 by shanxinkai at 20250513 start*/
+        /*A06_V code for P250509-05391 by shanxinkai at 20250513 start*/
         if (sgm->chg_type == POWER_SUPPLY_TYPE_USB_DCP) {
             sgm->hvdcp_done = false;
             sgm->force_detect_count = 0;
@@ -2023,7 +2023,7 @@ static int sgm415xx_enable_port_charging(struct charger_device *chg_dev, bool en
             schedule_delayed_work(&sgm->force_detect_dwork, 0);
         }
         pr_err("[%s] exit hiz force detect, sgm->chg_typ=%d, sgm->typec_attached=%d\n", __func__, sgm->chg_type, sgm->typec_attached);
-        /*A06_V code for P250428-09126 by shanxinkai at 20250513 end*/
+        /*A06_V code for P250509-05391 by shanxinkai at 20250513 end*/
     } else {
         ret = sgm415xx_enter_hiz_mode(sgm);
     }

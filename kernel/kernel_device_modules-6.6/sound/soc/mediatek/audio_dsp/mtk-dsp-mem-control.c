@@ -361,6 +361,18 @@ static struct audio_dsp_dram
 		},
 };
 
+static struct audio_dsp_dram
+	adsp_sharemem_fast_media_mblock[ADSP_TASK_SHAREMEM_NUM] = {
+		{
+			.size = 0x400, /* 1024 bytes */
+			.phy_addr = 0,
+		},
+		{
+			.size = 0x400, /* 1024 bytes */
+			.phy_addr = 0,
+		},
+};
+
 #if IS_ENABLED(CONFIG_MTK_ADSP_AUTO_HFP_CLIENT_SUPPORT)
 static struct audio_dsp_dram
 	adsp_sharemem_hfp_client_rx_mblock[ADSP_TASK_SHAREMEM_NUM] = {
@@ -700,6 +712,7 @@ static struct mtk_adsp_task_attr adsp_task_attr[AUDIO_TASK_DAI_NUM] = {
 				VOICE_CALL_SUB_FEATURE_ID, false},
 	[AUDIO_TASK_CALLUL_ID] = {true, -1, -1, -1,
 				VOICE_CALL_FEATURE_ID, false},
+	[AUDIO_TASK_FAST_MEDIA_ID] = {false, -1, -1, -1, FAST_MEDIA_FEATURE_ID, false},
 #if IS_ENABLED(CONFIG_MTK_ADSP_AUTO_HFP_CLIENT_SUPPORT)
 	[AUDIO_TASK_HFP_CLIENT_RX_ADSP_ID] = {true, -1, -1, -1,
 				HFP_CLIENT_RX_FEATURE_ID, false},
@@ -820,6 +833,8 @@ static struct audio_dsp_dram *mtk_get_adsp_sharemem_block(int audio_task_id)
 		return adsp_sharemem_calldl_mblock;
 	case AUDIO_TASK_CALLUL_ID:
 		return adsp_sharemem_callul_mblock;
+	case AUDIO_TASK_FAST_MEDIA_ID:
+		return adsp_sharemem_fast_media_mblock;
 #if IS_ENABLED(CONFIG_MTK_ADSP_AUTO_HFP_CLIENT_SUPPORT)
 	case AUDIO_TASK_HFP_CLIENT_RX_ADSP_ID:
 		return adsp_sharemem_hfp_client_rx_mblock;
@@ -1274,6 +1289,7 @@ int get_featureid_by_dsp_daiid(int task_id)
 	ret = task_attr->adsp_feature_id;
 	return ret;
 }
+EXPORT_SYMBOL_GPL(get_featureid_by_dsp_daiid);
 
 int get_afememdl_by_afe_taskid(int task_id)
 {

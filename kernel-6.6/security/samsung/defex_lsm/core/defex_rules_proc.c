@@ -630,7 +630,8 @@ __visible_for_testing int lookup_tree(const char *file_path,
 						  feature_umhbin_path |
 						  feature_immutable_src_exception |
 						  feature_immutable_dst_exception |
-						  feature_immutable_root);
+						  feature_immutable_root |
+						  feature_immutable_tgt_exception);
 
 	if (!found_item)
 		found_item = &local_item;

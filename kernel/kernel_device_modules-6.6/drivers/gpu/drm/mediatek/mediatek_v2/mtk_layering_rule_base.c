@@ -4299,9 +4299,21 @@ static int RPO_rule(struct drm_crtc *crtc,
 
 		if (!is_rsz_valid(c))
 			continue;
-
-		if (same_ratio_limitation(crtc, c, RATIO_LIMIT, disp_w, disp_h))
-			continue;
+		if (!(!(mtk_crtc->is_dual_pipe) &&
+			(i == 0 && private && private->data &&
+			((private->data->mmsys_id == MMSYS_MT6761) ||
+			(private->data->mmsys_id == MMSYS_MT6765) ||
+			(private->data->mmsys_id == MMSYS_MT6768) ||
+			(private->data->mmsys_id == MMSYS_MT6781) ||
+			(private->data->mmsys_id == MMSYS_MT6877) ||
+			(private->data->mmsys_id == MMSYS_MT6833) ||
+			(private->data->mmsys_id == MMSYS_MT6853) ||
+			(private->data->mmsys_id == MMSYS_MT6885) ||
+			(private->data->mmsys_id == MMSYS_MT6991))))) {
+			if (same_ratio_limitation(crtc, c, RATIO_LIMIT,
+				disp_w, disp_h))
+				continue;
+		}
 
 		mtk_rect_make(&src_layer_roi,
 			((c->dst_offset_x * c->src_width * 10) / c->dst_width + 5) / 10,

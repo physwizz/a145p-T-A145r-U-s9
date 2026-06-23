@@ -476,8 +476,6 @@ enum NanTlvType {
 	NAN_TLV_TYPE_DW_EARLY_TERMINATION = 4136,
 	NAN_TLV_TYPE_TX_RX_CHAINS = 4137,
 	NAN_TLV_TYPE_ENABLE_DEVICE_RANGING = 4138,
-	NAN_TLV_TYPE_ENABLE_INSTANT_MODE = 4140,
-	NAN_TLV_TYPE_ENABLE_INSTANT_MODE_CHANNEL = 4141,
 	NAN_TLV_TYPE_CONFIG_LAST = 8191,
 
 	/* Attributes types */
@@ -836,7 +834,7 @@ void nanMapSdeaCtrlParams(u32 *pIndata,
 void nanMapRangingConfigParams(u32 *pIndata,
 			       struct NanRangingCfg *prNanRangingCfg);
 void
-nanMapNan20RangingReqParams(struct ADAPTER *prAdapter, u32 *pIndata,
+nanMapNan20RangingReqParams(u32 *pIndata,
 			    struct NanRangeResponseCfg *prNanRangeRspCfgParms);
 int mtk_cfg80211_vendor_nan(struct wiphy *wiphy, struct wireless_dev *wdev,
 			    const void *data, int data_len);
@@ -849,10 +847,6 @@ int mtk_cfg80211_vendor_nan_ext_indication(struct ADAPTER *prAdapter,
 int mtk_cfg80211_vendor_event_nan_event_indication(struct ADAPTER *prAdapter,
 						   uint8_t *pcuEvtBuf);
 int mtk_cfg80211_vendor_event_nan_schedule_config(
-	struct ADAPTER *prAdapter,
-	uint8_t *pcuEvtBuf);
-int
-mtk_cfg80211_vendor_event_nan_lowpower_ctrl(
 	struct ADAPTER *prAdapter,
 	uint8_t *pcuEvtBuf);
 int

@@ -1461,11 +1461,6 @@ static int nx853x_charger_probe(struct i2c_client *client)
         return -EINVAL;
     }
 
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 start*/
-    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_NX8530);
-    #endif
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 end*/
     for (i = 0; i < ARRAY_SIZE(nx853x_reg_fields); i++) {
         const struct reg_field *reg_fields = nx853x_reg_fields;
 
@@ -1544,6 +1539,11 @@ static int nx853x_charger_probe(struct i2c_client *client)
     g_gxy_cp_ops.get_otg_txmode = nx853x_usbpd_get_otg_txmode;
     sc->otg_tx_mode = false;
     /*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
+    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_NX8530);
+    #endif
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
     dev_err(sc->dev, "nx853x[%s] probe successfully!\n",
             sc->role == NX853X_STANDALONE ? "standalone" :
             (sc->role == NX853X_MASTER ? "master" : "slave"));

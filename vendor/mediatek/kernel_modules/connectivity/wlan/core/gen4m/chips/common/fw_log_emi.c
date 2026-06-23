@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
@@ -55,8 +55,7 @@ static void fw_log_emi_update_rp(struct ADAPTER *ad,
 	struct FW_LOG_EMI_SUB_CTRL *sub_ctrl,
 	uint32_t rp)
 {
-	ACQUIRE_POWER_CONTROL_FROM_PM(ad,
-		DRV_OWN_SRC_FW_LOG_EMI_UPDATE);
+	ACQUIRE_POWER_CONTROL_FROM_PM(ad);
 
 	if (ad->fgIsFwOwn == FALSE) {
 		DBGLOG(INIT, LOUD,
@@ -68,8 +67,8 @@ static void fw_log_emi_update_rp(struct ADAPTER *ad,
 					     sub_ctrl->type,
 					     rp);
 	}
-	RECLAIM_POWER_CONTROL_TO_PM(ad, FALSE,
-		DRV_OWN_SRC_FW_LOG_EMI_UPDATE);
+
+	RECLAIM_POWER_CONTROL_TO_PM(ad, FALSE);
 }
 
 static u_int8_t fw_log_emi_is_empty(struct FW_LOG_EMI_SUB_CTRL *sub_ctrl)
@@ -315,7 +314,7 @@ static int32_t fw_log_emi_refresh_common_header(struct ADAPTER *ad,
 			continue;
 		}
 
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"[%d %s] base_addr: 0x%x, length: 0x%x\n",
 			i,
 			fw_log_type_to_str(i),
@@ -389,7 +388,7 @@ static uint32_t fw_log_emi_sub_ctrl_init(struct ADAPTER *ad,
 	} else {
 		status = WLAN_STATUS_INVALID_LENGTH;
 	}
-	DBGLOG(INIT, DEBUG, "[%d %s] buf_base_addr: 0x%x, status: 0x%x\n",
+	DBGLOG(INIT, INFO, "[%d %s] buf_base_addr: 0x%x, status: 0x%x\n",
 		sub_ctrl->type,
 		fw_log_type_to_str(sub_ctrl->type),
 		sub_ctrl->buf_base_addr,
@@ -471,7 +470,7 @@ void fw_log_emi_set_enabled(struct ADAPTER *ad, u_int8_t enabled)
 {
 	struct FW_LOG_EMI_CTRL *ctrl = &g_fw_log_emi_ctx;
 
-	DBGLOG(INIT, DEBUG, "enabled: %d\n", enabled);
+	DBGLOG(INIT, INFO, "enabled: %d\n", enabled);
 
 	if (enabled)
 		__fw_log_emi_force_reset_buffer(ad, ctrl);
@@ -556,6 +555,6 @@ static void fw_log_emi_stats_dump(struct ADAPTER *ad,
 				       sub_ctrl->wp,
 				       sub_ctrl->iwp);
 	}
-	DBGLOG(INIT, DEBUG, "%s\n", buf);
+	DBGLOG(INIT, LOUD, "%s\n", buf);
 }
 

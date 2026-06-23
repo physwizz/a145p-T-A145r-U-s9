@@ -777,6 +777,37 @@ static ssize_t host_dev_show(struct device *dev,
 }
 static DEVICE_ATTR_RW(host_dev);
 
+static ssize_t force_vcore_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t count)
+{
+	struct ssusb_mtk *ssusb = dev_get_drvdata(dev);
+	int airplane_mode;
+
+	if (kstrtoint(buf, 10, &airplane_mode))
+		return -EINVAL;
+
+	if (airplane_mode != 0 && airplane_mode != 1)
+		return -EINVAL;
+
+	ssusb->force_vcore = (airplane_mode == 1) ? true : false;
+
+	dev_info(dev, "force_vcore %d\n", ssusb->force_vcore);
+
+	return count;
+}
+
+static ssize_t force_vcore_show(struct device *dev,
+				struct device_attribute *attr,
+				char *buf)
+{
+	struct ssusb_mtk *ssusb = dev_get_drvdata(dev);
+
+	return sprintf(buf, "%d\n", ssusb->force_vcore ? 1 : 0);
+}
+static DEVICE_ATTR_RW(force_vcore);
+
+
 static struct attribute *ssusb_dr_attrs[] = {
 	&dev_attr_mode.attr,
 	&dev_attr_role_mode.attr,
@@ -784,6 +815,7 @@ static struct attribute *ssusb_dr_attrs[] = {
 	&dev_attr_saving.attr,
 	&dev_attr_u3_lpm.attr,
 	&dev_attr_host_dev.attr,
+	&dev_attr_force_vcore.attr,
 	NULL
 };
 

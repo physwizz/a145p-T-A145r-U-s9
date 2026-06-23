@@ -46,12 +46,7 @@
 
 #define NAN_FW_MAX_MATCH_FILTER_LEN 255
 #define NAN_FW_MAX_SERVICE_SPECIFIC_INFO_LEN 255
-#if (CFG_SUPPORT_NAN_EXT == 1)
-/* May be extend to 1400 for the future */
 #define NAN_FW_MAX_FOLLOW_UP_SDEA_LEN  255
-#else
-#define NAN_FW_MAX_FOLLOW_UP_SDEA_LEN  255
-#endif
 #define NAN_FW_MAX_SCID_BUF_LEN 128
 #define NAN_FW_MAX_SDEA_SERVICE_SPECIFIC_INFO_LEN 255
 
@@ -74,21 +69,12 @@
 #define NAN_SECURITY_MIN_PASSPHRASE_LEN 8
 #define NAN_SECURITY_MAX_PASSPHRASE_LEN 63
 
-#if (CFG_SUPPORT_NAN_EXT == 1)
 /* Max publish + subscribe numbers 12 */
 #define NAN_MAX_PUBLISH_NUM 6
 #define NAN_MAX_SUBSCRIBE_NUM 6
 #define NAN_MAX_QUEUE_FOLLOW_UP 6
 /* MAX 6 queued follow up messages and 6 solicited publish */
 #define NUM_OF_NAN_POST_PROCESS 12
-#else
-/* Max publish + subscribe numbers 4 */
-#define NAN_MAX_PUBLISH_NUM 2
-#define NAN_MAX_SUBSCRIBE_NUM 2
-#define NAN_MAX_QUEUE_FOLLOW_UP 2
-/* MAX 2 queued follow up messages and 2 solicited publish */
-#define NUM_OF_NAN_POST_PROCESS 4
-#endif
 
 #if (CFG_SUPPORT_NAN_DBDC == 1)
 #define NAN_MAX_NDP_SESSIONS 8
@@ -1053,15 +1039,6 @@ struct NanEnableRequest {
 	 */
 	uint8_t config_subscribe_sid_beacon;
 	uint32_t subscribe_sid_beacon_val;
-
-	/* Enable/disable NAN slot statistics */
-	uint8_t enable_log_slot_statistics;
-
-
-	/* Instant communication mode */
-	u_int8_t fgNanInstantMode;
-	uint32_t u4NanInstantModeChannel; /* frequency, e.g., 2437 for ch 6 */
-
 } __KAL_ATTRIB_PACKED__ __KAL_ATTRIB_ALIGNED__(4);
 
 /* Enable Unsync Message Structure

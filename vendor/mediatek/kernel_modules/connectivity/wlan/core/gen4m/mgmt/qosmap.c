@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
@@ -89,7 +89,7 @@ static const uint8_t dscp2up[64] = {
 	[46] = WMM_UP_VO_INDEX,
 #if !CFG_WIFI_AT_THE_EDGE_QOS
 	[48] = WMM_UP_VO_INDEX,
-	[56] = WMM_UP_NC_INDEX,
+	[56] = WMM_UP_VO_INDEX,
 #endif
 };
 #endif
@@ -175,17 +175,17 @@ void handleQosMapConf(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 	case ACTION_ADDTS_REQ:
 	case ACTION_ADDTS_RSP:
 	case ACTION_SCHEDULE:
-		DBGLOG(INIT, DEBUG, "qos action frame received, action: %d\n",
+		DBGLOG(INIT, INFO, "qos action frame received, action: %d\n",
 			prRxFrame->ucAction);
 		break;
 	case ACTION_QOS_MAP_CONFIGURE:
 		qosHandleQosMapConfigure(prAdapter, prSwRfb);
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"qos map configure frame received, action: %d\n",
 			prRxFrame->ucAction);
 		break;
 	default:
-		DBGLOG(INIT, DEBUG,
+		DBGLOG(INIT, INFO,
 			"qos action frame: %d, try to send to supplicant\n",
 			prRxFrame->ucAction);
 		break;
@@ -208,7 +208,7 @@ int qosHandleQosMapConfigure(struct ADAPTER *prAdapter,
 	if ((!prStaRec) || (!prStaRec->fgIsInUse))
 		return -1;
 
-	DBGLOG(INIT, DEBUG,
+	DBGLOG(INIT, INFO,
 		"IEEE 802.11: Received Qos Map Configure Frame from "
 		MACSTR "\n",
 		MAC2STR(prStaRec->aucMacAddr));
@@ -263,7 +263,7 @@ static void qosBuildQosMapTable(struct STA_RECORD *prStaRec,
 		hDscp = *p++;
 
 		if (lDscp == 255 && hDscp == 255) {
-			DBGLOG(INIT, DEBUG, "UP %d is not specified\n", up);
+			DBGLOG(INIT, INFO, "UP %d is not specified\n", up);
 			continue;
 		}
 
@@ -314,7 +314,7 @@ void qosParseQosMapSet(struct ADAPTER *prAdapter, struct STA_RECORD *prStaRec,
 	/* Copy for struct QOS_MAP */
 	updateCachedQosMap(prStaRec, (dscp_range - dscp_exception) / 2,
 			dscp_exception, dscp_range);
-	DBGLOG(INIT, DEBUG, "QosMapSet DSCP Exception number: %td\n",
+	DBGLOG(INIT, INFO, "QosMapSet DSCP Exception number: %td\n",
 			(dscp_range - dscp_exception) / 2);
 }
 

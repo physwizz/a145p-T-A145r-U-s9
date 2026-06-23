@@ -806,8 +806,10 @@ static int layering_get_valid_hrt(struct drm_crtc *crtc,
 	int mode_idx = disp_info->disp_mode_idx[0];
 
 	if (!mtk_drm_helper_get_opt(priv->helper_opt,
-			MTK_DRM_OPT_MMQOS_SUPPORT))
-		return 600;
+			MTK_DRM_OPT_MMQOS_SUPPORT)){
+		dvfs_bw = 600;
+		goto out_dvfs_bw;
+	}
 
 	if (get_layering_opt(LYE_OPT_SPHRT)) {
 		if (priv->pre_defined_bw[disp_idx] != 0xffffffff) {
@@ -835,7 +837,8 @@ static int layering_get_valid_hrt(struct drm_crtc *crtc,
 	}
 	if (avail_bw == 0xfffffffffffffffe) {
 		DDPPR_ERR("mm_hrt_get_available_hrt_bw=-2\n");
-		return 600;
+		dvfs_bw = 600;
+		goto out_dvfs_bw;
 	}
 	avail_bw -= tmp;
 	dvfs_bw = avail_bw;
@@ -854,10 +857,13 @@ static int layering_get_valid_hrt(struct drm_crtc *crtc,
 		/* for avail_bw == 0 case, which imply this display is not HRT,
 		 *  return this function to 16 overlap
 		 */
-		if (avail_bw == 0)
-			return 1600;
+		if (avail_bw == 0){
+			dvfs_bw = 1600;
+			goto out_dvfs_bw;
+		}
 		DDPPR_ERR("Get frame hrt bw by datarate is zero\n");
-		return 600;
+		dvfs_bw = 600;
+		goto out_dvfs_bw;
 	}
 	dvfs_bw = DO_COMMON_DIV(dvfs_bw, tmp * 100);
 
@@ -874,6 +880,11 @@ static int layering_get_valid_hrt(struct drm_crtc *crtc,
 
 	DDPINFO("disp %u get avail HRT BW:%llu : %llu %llu\n",
 		disp_idx, avail_bw, dvfs_bw, tmp);
+
+out_dvfs_bw:
+
+	if ((priv->data->mmsys_id == MMSYS_MT6991) && (dvfs_bw > 400))
+		dvfs_bw = 400;
 
 	return dvfs_bw;
 }

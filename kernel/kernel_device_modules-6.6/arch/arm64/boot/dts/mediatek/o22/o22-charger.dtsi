@@ -37,7 +37,7 @@
         sc8960x,vbat-low-otg = <0>; /*0: 2.8V, 1: 2.5V*/
         sc8960x,ipre-chg = <2>; /*60 + val * 60, unit:mA*/
         sc8960x,itermination = <2>; /*60 + val * 60, unit:mA*/
-        sc8960x,vbat-volt = <44>; /*3848 + val * 8, unit:mV*/
+        sc8960x,vbat-volt = <69>; /*3848 + val * 8, unit:mV*/
         sc8960x,top-off-timer = <0>; /*0: dis, 1: 15min, 2: 20min 3: 45min*/
         sc8960x,vrechg-volt = <0>; /*0: 100mV, 1: 200mV*/
         sc8960x,en-termination = <1>; /*0: disable, 1: enable*/
@@ -51,7 +51,9 @@
         sc8960x,vindpm-int-mask = <1>; /*0: not mask, 1: mask*/
         sc8960x,iindpm-int-mask = <1>; /*0: not mask, 1: mask*/
         sc8960x,vpre-to-cc = <0>; /*0: 3V, 1: 2.8V*/
-        sc8960x,auto-dpdm-en = <1>; /*0: disale, 1: enable*/
+        /*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 start*/
+        sc8960x,auto-dpdm-en = <0>; /*0: disale, 1: enable*/
+        /*A14_V code for P250902-05244 by xiongxiaoliang at 20250906 end*/
         sc8960x,ntc-pin-dis = <1>; /*0: enable, 1: disable*/
         phys = <&u2port0 PHY_TYPE_USB2>;
         phy-names = "usb2-phy";

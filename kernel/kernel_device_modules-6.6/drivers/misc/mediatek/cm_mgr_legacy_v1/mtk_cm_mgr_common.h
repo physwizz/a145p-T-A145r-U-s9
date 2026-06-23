@@ -125,5 +125,7 @@ enum {
 	DDR_TYPE_LP5,
 	DDR_TYPE_MAX,
 };
+
+#define USE_CPU_TO_DRAM_MAP
 #endif
 #endif	/* __MTK_CM_MGR_H__ */

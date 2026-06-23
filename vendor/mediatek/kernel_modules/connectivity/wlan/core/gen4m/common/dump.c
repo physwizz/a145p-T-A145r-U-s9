@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
@@ -68,13 +68,12 @@
  * \return (none)
  */
 /*----------------------------------------------------------------------------*/
+/* coverity[ -taint_source : arg-0 ] */
 void dumpHex(uint8_t *pucStartAddr, uint16_t u2Length)
 {
 #if !DBG_DISABLE_ALL_LOG
 #define BUFSIZE 100
-#define TEXTSIZE 40
 	uint8_t output[BUFSIZE] = {0};
-	uint8_t text[TEXTSIZE];
 	uint32_t i = 0;
 	uint32_t printed = 0;
 	uint32_t offset = 0;
@@ -83,23 +82,17 @@ void dumpHex(uint8_t *pucStartAddr, uint16_t u2Length)
 	LOG_FUNC("DUMPHEX ADDRESS: 0x%p, Length: %d\n", pucStartAddr, u2Length);
 
 	while (u2Length > 0) {
-		kalMemZero(text, sizeof(text));
-
 		for (i = 0, offset = 0; i < 32 && u2Length; i++) {
 			offset += snprintf(output + offset, BUFSIZE - offset,
 					"%02x %s",
 					pucStartAddr[printed + i],
 					i + 1 == 16 ? "- " :
 					(i + 1) % 16 == 8 ? " " : "");
-			text[i] = isprint(pucStartAddr[printed + i]) ?
-					pucStartAddr[printed + i] : '.';
 			u2Length--;
 		}
 		LOG_FUNC("%04x: %s\n", printed, output);
 		printed += 32;
 	}
-#undef BUFSIZE
-#undef TEXTSIZE
 #endif
 }
 

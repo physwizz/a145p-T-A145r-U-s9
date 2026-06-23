@@ -1464,8 +1464,6 @@ bool kvm_iommu_idmap_range_check(phys_addr_t start, phys_addr_t end,
 
 	return	address_vm_range_check(vm, start, end);
 }
-/* Flush TLB in every 5000 times SMMU idmap, which trigger from pVM launched */
-unsigned long tlbi_counter;
 /* According to snapshot status, change protected VM permission mapping */
 static bool snapshot_done;
 
@@ -1489,6 +1487,7 @@ static void mtk_smmu_host_stage2_idmap(struct kvm_hyp_iommu_domain *domain,
 	if (!prot) {
 		/* unmap vm */
 		smmu_vm_unmap(0, paddr, size);
+		tlb_sync = true;
 		/*
 		 * Using snapshot status to distinctive iommu idmap stage.
 		 * Before snapshot done, iommu idmap have to unmap both VM
@@ -1505,7 +1504,6 @@ static void mtk_smmu_host_stage2_idmap(struct kvm_hyp_iommu_domain *domain,
 		else
 			smmu_vm_map(1, paddr, size,
 				    MM_MODE_R | MM_MODE_W | MM_MODE_X);
-
 	} else {
 		/* return page */
 		if ((prot & KVM_PGTABLE_PROT_R) ||
@@ -1515,12 +1513,6 @@ static void mtk_smmu_host_stage2_idmap(struct kvm_hyp_iommu_domain *domain,
 			smmu_vm_map(1, paddr, size, MM_MODE_R);
 		}
 	}
-
-	if (tlbi_counter > 5000) {
-		tlb_sync = true;
-		tlbi_counter = 0;
-	} else
-		tlbi_counter++;
 
 	hyp_spin_unlock(&smmu_all_vm_lock);
 	if (tlb_sync)

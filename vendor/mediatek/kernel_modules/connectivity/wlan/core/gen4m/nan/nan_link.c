@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
@@ -25,11 +25,12 @@ struct BSS_INFO *nanGetDefaultLinkBssInfo(
 	if (!ad)
 		return bss;
 
-	for (i = 0; i < ad->ucSwBssIdNum; i++) {
+	for (i = 0; i < ad->ucHwBssIdNum; i++) {
 		prBssInfo = ad->aprBssInfo[i];
 
 		if (prBssInfo &&
-			IS_BSS_NAN(prBssInfo))
+			IS_BSS_NAN(prBssInfo) &&
+			IS_BSS_ALIVE(ad, prBssInfo))
 			return prBssInfo;
 	}
 
@@ -117,7 +118,7 @@ nanGetLinkIndexbyBand(
 		if ((prBssInfo != NULL) &&
 			(prBssInfo->eBand == eBand) &&
 			(ucIdx < ad->rWifiVar.ucNanMldLinkMax)) {
-			DBGLOG(NAN, INFO,
+			DBGLOG(NAN, VOC,
 				"Band%d, Idx%d\n",
 				eBand, ucIdx);
 			return ucIdx;
@@ -157,9 +158,8 @@ void nanGetLinkWmmQueSet(
 		prBssInfo->fgIsWmmInited = TRUE;
 		prBssInfo->ucWmmQueSet = bss->ucWmmQueSet;
 
-		/* if (bss != prBssInfo)
-		 *	prBssInfo->ucOwnMacIndex = bss->ucOwnMacIndex;
-		 */
+		if (bss != prBssInfo)
+			prBssInfo->ucOwnMacIndex = bss->ucOwnMacIndex;
 	} else
 #endif
 	{
@@ -167,7 +167,7 @@ void nanGetLinkWmmQueSet(
 		cnmWmmIndexDecision(prAdapter, prBssInfo);
 	}
 
-	DBGLOG(NAN, DEBUG, "bss%d, wmm=%d, omac=%d\n",
+	DBGLOG(NAN, INFO, "bss%d, wmm=%d, omac=%d\n",
 		prBssInfo->ucBssIndex,
 		prBssInfo->ucWmmQueSet,
 		prBssInfo->ucOwnMacIndex);
@@ -231,7 +231,7 @@ void nanDumpStaRec(
 			ucBssIndex = s->ucBssIndex;
 		}
 
-		DBGLOG(NAN, DEBUG,
+		DBGLOG(NAN, INFO,
 			"CxtId:%d, Sta:%d, Bss:%d, Enrollee:%d\n",
 			cxt->ucId,
 			ucIndex,
@@ -286,14 +286,14 @@ uint32_t nanSetPreferLinkStaRec(
 			return WLAN_STATUS_FAILURE;
 		}
 
-		DBGLOG(NAN, DEBUG,
+		DBGLOG(NAN, INFO,
 			"Check sta%d, bss%d\n",
 			sta->ucWlanIndex,
 			sta->ucBssIndex);
 
 		if (sta->ucBssIndex == idx) {
 			cxt->prNanPreferStaRec = sta;
-			DBGLOG(NAN, INFO,
+			DBGLOG(NAN, VOC,
 				"Prefer sta %d\n",
 				sta->ucWlanIndex);
 			return WLAN_STATUS_SUCCESS;
@@ -376,18 +376,8 @@ void nanMldBssInit(struct ADAPTER *prAdapter)
 {
 	if (nanLinkNeedMlo(prAdapter)) {
 		if (gprNanMldBssInfo == NULL) {
-			struct BSS_INFO *bss;
-
-			/* main bss must assign wmm first */
-			bss = nanGetDefaultLinkBssInfo(
-				prAdapter,
-				NULL);
-			if (bss) {
-				DBGLOG(INIT, TRACE, "\n");
-				gprNanMldBssInfo =
-					mldBssAlloc(prAdapter,
-					bss->aucOwnMacAddr);
-			}
+			DBGLOG(INIT, TRACE, "\n");
+			gprNanMldBssInfo = mldBssAlloc(prAdapter);
 		}
 	}
 }
@@ -418,7 +408,7 @@ void nanMldBssRegister(struct ADAPTER *prAdapter,
 		}
 
 		if (nanLinkNeedMlo(prAdapter)) {
-			prNanBssInfo->ucLinkId =
+			prNanBssInfo->ucLinkIndex =
 				prMldBssInfo->rBssList.u4NumElem;
 		}
 

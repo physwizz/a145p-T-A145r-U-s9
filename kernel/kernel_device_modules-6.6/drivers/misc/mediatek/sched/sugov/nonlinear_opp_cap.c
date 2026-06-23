@@ -2563,6 +2563,29 @@ void set_grp_high_freq(int cluster_id, bool set)
 }
 EXPORT_SYMBOL(set_grp_high_freq);
 
+inline bool is_set_adaptive_freq(unsigned int gearid)
+{
+	return adaptive_freq_array[gearid][ADAPTIVE_LOW] || adaptive_freq_array[gearid][ADAPTIVE_HIGH];
+}
+
+inline unsigned long map_adaptive_freq(unsigned int cpu,unsigned long next_freq,unsigned long rq_uclamp_max)
+{
+	unsigned int gearid = topology_cluster_id(cpu);
+	unsigned long rq_freq_max,adaptive_low_freq,adaptive_high_freq;
+
+	rq_freq_max = pd_get_util_freq(cpu, rq_uclamp_max);
+	adaptive_low_freq = adaptive_freq_array[gearid][ADAPTIVE_LOW];
+	adaptive_high_freq = adaptive_freq_array[gearid][ADAPTIVE_HIGH];
+
+	if (next_freq < adaptive_low_freq)
+		next_freq = adaptive_low_freq;
+	else if (next_freq < adaptive_high_freq)
+		next_freq = adaptive_high_freq;
+
+	next_freq = min(next_freq,rq_freq_max);
+	return next_freq;
+}
+
 inline void mtk_map_util_freq_adap_grp(void *data, unsigned long util,
 				unsigned int cpu, unsigned long *next_freq, struct cpumask *cpumask)
 {
@@ -2575,6 +2598,7 @@ inline void mtk_map_util_freq_adap_grp(void *data, unsigned long util,
 	u64 wall_time_stamp;
 	struct rq *rq;
 	unsigned long rq_uclamp_min, rq_uclamp_max;
+	bool is_set_adaptive = false;
 
 	rq = cpu_rq(cpu);
 	rq_uclamp_min = READ_ONCE(rq->uclamp[UCLAMP_MIN].value);
@@ -2612,9 +2636,13 @@ inline void mtk_map_util_freq_adap_grp(void *data, unsigned long util,
 
 	*next_freq = pd_get_util_freq(cpu, util);
 
+	is_set_adaptive = is_set_adaptive_freq(gearid);
+	if (is_set_adaptive)
+		*next_freq = map_adaptive_freq(cpu,*next_freq,rq_uclamp_max);
+
 	if (trace_sugov_ext_group_dvfs_enabled())
 		trace_sugov_ext_group_dvfs(first_cpu, util, pelt_util_with_margin,
-			flt_util, util_ori, READ_ONCE(adaptive_margin[first_cpu]), *next_freq);
+			flt_util, util_ori, READ_ONCE(adaptive_margin[first_cpu]), *next_freq,is_set_adaptive);
 
 	if (data != NULL) {
 		policy->cached_target_freq = *next_freq;
@@ -2628,12 +2656,18 @@ void mtk_map_util_freq(void *data, unsigned long util, struct cpumask *cpumask,
 {
 	int orig_util = util;
 	unsigned int cpu=0;
+	unsigned int gearid;
+	unsigned long rq_uclamp_max;
+	struct rq *rq;
+	bool is_set_adaptive = false;
 
 	if (!cpumask)
 		return;
 
 	cpu = cpumask_first(cpumask);
-
+	gearid = topology_cluster_id(cpu);
+	rq = cpu_rq(cpu);
+	rq_uclamp_max = READ_ONCE(rq->uclamp[UCLAMP_MAX].value);
 	if (!turn_point_util[cpu] && (am_ctrl || grp_dvfs_ctrl_mode)) {
 		mtk_map_util_freq_adap_grp(data, util, cpu, next_freq, cpumask);
 		return;
@@ -2649,6 +2683,10 @@ void mtk_map_util_freq(void *data, unsigned long util, struct cpumask *cpumask,
 					>> SCHED_CAPACITY_SHIFT);
 
 	*next_freq = pd_X2Y(cpu, util, CAP, FREQ, false, DPT_CALL_MTK_MAP_UTIL_FREQ);
+
+	is_set_adaptive = is_set_adaptive_freq(gearid);
+	if (is_set_adaptive)
+		*next_freq = map_adaptive_freq(cpu,*next_freq,rq_uclamp_max);
 	if (data != NULL) {
 		struct sugov_policy *sg_policy = (struct sugov_policy *)data;
 		struct cpufreq_policy *policy = sg_policy->policy;
@@ -2661,7 +2699,7 @@ void mtk_map_util_freq(void *data, unsigned long util, struct cpumask *cpumask,
 	if (trace_sugov_ext_turn_point_margin_enabled() && turn_point_util[cpu]) {
 		orig_util = (orig_util * util_scale) >> SCHED_CAPACITY_SHIFT;
 		trace_sugov_ext_turn_point_margin(cpu, orig_util, util,
-			turn_point_util[cpu], target_margin[cpu], target_margin_low[cpu]);
+			turn_point_util[cpu], target_margin[cpu], target_margin_low[cpu],*next_freq,is_set_adaptive);
 	}
 }
 EXPORT_SYMBOL_GPL(mtk_map_util_freq);

@@ -624,6 +624,10 @@ __visible_for_testing int task_defex_immutable(struct defex_context *dc, int att
 	target_name = get_dc_target_name(dc);
 	is_violation = rules_lookup(target_name, attribute, dc->target_file, NULL, 0);
 
+	if (is_violation)
+		is_violation = !rules_lookup(target_name, feature_immutable_tgt_exception,
+					    dc->target_file, NULL, 0);
+
 	if (is_violation) {
 		if (!get_dc_process_dpath(dc))
 			goto out;

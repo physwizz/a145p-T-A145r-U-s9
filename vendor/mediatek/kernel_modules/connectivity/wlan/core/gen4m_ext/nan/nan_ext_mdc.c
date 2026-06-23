@@ -188,25 +188,25 @@ uint32_t nanProcessMDC(struct ADAPTER *prAdapter, const uint8_t *buf,
 	struct IE_NAN_MDC_CMD *c = (struct IE_NAN_MDC_CMD *)buf;
 	uint32_t offset = 0;
 
-	DBGLOG(NAN, DEBUG, "Enter %s, consuming %zu bytes\n",
+	DBGLOG(NAN, INFO, "Enter %s, consuming %zu bytes\n",
 	       __func__, sizeof(struct IE_NAN_MDC_CMD));
 
-	DBGLOG(NAN, DEBUG, "OUI: %d(%02X) (%s)\n",
+	DBGLOG(NAN, INFO, "OUI: %d(%02X) (%s)\n",
 	       c->ucNanOui, c->ucNanOui, oui_str(c->ucNanOui));
-	DBGLOG(NAN, DEBUG, "Length: %d\n", c->ucLength);
-	DBGLOG(NAN, DEBUG, "ReqId: %d\n", c->ucRequestId);
+	DBGLOG(NAN, INFO, "Length: %d\n", c->ucLength);
+	DBGLOG(NAN, INFO, "ReqId: %d\n", c->ucRequestId);
 
-	DBGLOG(NAN, DEBUG, "Type: %d\n", c->cmd_type);
-	DBGLOG(NAN, DEBUG, "Subtype: %d\n", c->subtype);
-	DBGLOG(NAN, DEBUG, "Updated: %d\n", c->updated);
-	DBGLOG(NAN, DEBUG, "Merging Criteria Value: %d\n",
+	DBGLOG(NAN, INFO, "Type: %d\n", c->cmd_type);
+	DBGLOG(NAN, INFO, "Subtype: %d\n", c->subtype);
+	DBGLOG(NAN, INFO, "Updated: %d\n", c->updated);
+	DBGLOG(NAN, INFO, "Merging Criteria Value: %d\n",
 			c->ucMergingCriteriaValue);
-	DBGLOG(NAN, DEBUG, "Merging Criteria Type: %d\n",
+	DBGLOG(NAN, INFO, "Merging Criteria Type: %d\n",
 			c->merging_criteria_type);
-	DBGLOG(NAN, DEBUG, "Merging Criteria Lifetime: %d\n",
+	DBGLOG(NAN, INFO, "Merging Criteria Lifetime: %d\n",
 			c->merging_criteria_lifetime);
-	DBGLOG(NAN, DEBUG, "Update Method: %d\n", c->update_method);
-	DBGLOG(NAN, DEBUG, "Update Device: %d\n", c->update_device);
+	DBGLOG(NAN, INFO, "Update Method: %d\n", c->update_method);
+	DBGLOG(NAN, INFO, "Update Device: %d\n", c->update_device);
 
 	g_rNanExtCmdMdc.ucType = c->cmd_type;
 	g_rNanExtCmdMdc.ucSubtype = c->subtype;

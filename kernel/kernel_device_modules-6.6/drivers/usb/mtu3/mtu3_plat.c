@@ -145,7 +145,6 @@ static void ssusb_hwrscs_req_v2_v3(struct ssusb_mtk *ssusb,
 	if (vcore_req_support)
 		spm_msk |= SSUSB_SPM_VCORE_EN;
 
-
 	/* Clear FORCE HW Request which is default on since MT6989 */
 	spm_ctrl &= ~SSUSB_SPM_FORCE_HW_REQ_MSK;
 
@@ -158,12 +157,20 @@ static void ssusb_hwrscs_req_v2_v3(struct ssusb_mtk *ssusb,
 		break;
 	case MTU3_STATE_OFFLOAD:
 		/* Clear req for offload scenario */
+		spm_ctrl |= SSUSB_SPM_REQ_OFFLOAD_MSK;
 		spm_ctrl &= ~(SSUSB_SPM_REQ_OFFLOAD_MSK ^ spm_msk);
 
 		/* set apsrc=0 and ddren=1, inform peri not to protect bus */
 		if (of_device_is_compatible(ssusb->dev->of_node, "mediatek,mt6899-mtu3"))
 			spm_ctrl |= SSUSB_SPM_DDR_EN;
 
+		break;
+	case MTU3_STATE_OFFLOAD_IDLE:
+		/* set apsrc, ddren and emi to hw mode */
+		spm_ctrl |= SSUSB_SPM_REQ_OFFLOAD_IDLE_MSK;
+		spm_ctrl &= ~(SSUSB_SPM_REQ_OFFLOAD_IDLE_MSK ^ (spm_msk | SSUSB_SPM_FORCE_HW_REQ_MSK));
+		/* ignore the corresponding ack bit when switching to hw mode */
+		spm_msk &= spm_ctrl;
 		break;
 	case MTU3_STATE_RESUME:
 		spm_ctrl |= spm_msk;
@@ -192,10 +199,18 @@ static void ssusb_hwrscs_req_v2_v3(struct ssusb_mtk *ssusb,
 	/* wait 2ms */
 	mdelay(2);
 
-	/* send smc request */
-	if (smc_req != -1)
-		arm_smccc_smc(MTK_SIP_KERNEL_USB_CONTROL,
-			smc_req, 0, 0, 0, 0, 0, 0, &res);
+	if (of_device_is_compatible(ssusb->dev->of_node, "mediatek,mt6991-mtu3")) {
+		dev_info(ssusb->dev, "%s vcore setting = %d\n", __func__, ssusb->force_vcore);
+		if (ssusb->force_vcore == 1 && smc_req != -1) {
+			arm_smccc_smc(MTK_SIP_KERNEL_USB_CONTROL,
+				smc_req, 0, 0, 0, 0, 0, 0, &res);
+		}
+	} else {
+		/* send smc request */
+		if (smc_req != -1)
+			arm_smccc_smc(MTK_SIP_KERNEL_USB_CONTROL,
+				smc_req, 0, 0, 0, 0, 0, 0, &res);
+	}
 }
 
 static void ssusb_smc_request(struct ssusb_mtk *ssusb,
@@ -655,6 +670,16 @@ static int ssusb_offload_get_mode(struct ssusb_offload *offload)
 	else
 		return SSUSB_OFFLOAD_MODE_NONE;
 }
+
+void ssusb_offload_set_power_state(struct ssusb_offload *offload,
+		enum mtu3_power_state state)
+{
+	if (!offload || !offload->ssusb)
+		return;
+
+	ssusb_set_power_state(offload->ssusb, state);
+}
+EXPORT_SYMBOL_GPL(ssusb_offload_set_power_state);
 
 int ssusb_offload_register(struct ssusb_offload *offload)
 {

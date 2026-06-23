@@ -310,9 +310,9 @@ struct mtk_panel_dsc_params *mtk_dsc_default_setting(void)
 		.rc_tgt_offset_hi = 3,
 		.rc_tgt_offset_lo = 3,
 	};
-
-	mtk_dp_get_dsc_capability(dsc_cap);
-	dsc_params.bp_enable = dsc_cap[6];
+	DDPINFO("dsc parameter set");
+	//mtk_dp_get_dsc_capability(dsc_cap);
+	//dsc_params.bp_enable = dsc_cap[6];
 	//dsc_params.ver = dsc_cap[1];
 
 	return &dsc_params;
@@ -430,7 +430,8 @@ static void mtk_dsc1_config(struct mtk_ddp_comp *comp,
 
 	bit_per_pixel = dsc_params->bit_per_pixel;
 	bit_per_channel = dsc_params->bit_per_channel;
-	line_buf_depth = dsc_params->bit_per_channel + 1;
+	line_buf_depth = (dsc_param_load_mode != 1) ?
+		dsc_params->dsc_line_buf_depth : dsc_params->bit_per_channel + 1;
 
 	if (dsc_params->enable == 1) {
 		DDPINFO("%s, w:%d, h:%d, slice_mode:%d,slice(%d,%d),bpp:%d\n",
@@ -620,8 +621,10 @@ static void mtk_dsc1_config(struct mtk_ddp_comp *comp,
 		else
 			reg_val |= (dsc_params->bit_per_pixel << 8);
 
-		bp_enable = 1;
 		reg_val |= (dsc_params->rct_on<< 18);
+
+		bp_enable = (dsc_param_load_mode != 1) ?
+			dsc_params->bp_enable : 1;
 		reg_val |= (bp_enable << 19);
 
 		mtk_ddp_write_relaxed(comp,	reg_val,
@@ -678,7 +681,7 @@ static void mtk_dsc1_config(struct mtk_ddp_comp *comp,
 			   ((slice_bits - num_extra_mux_bits) % mux_word_size != 0)) {
 			num_extra_mux_bits--;
 		}
-		DDPMSG("RCT_ON = 0x%X, num_extra_mux_bits = %d->%d, slice_bits = %d\n",
+		DDPINFO("RCT_ON = 0x%X, num_extra_mux_bits = %d->%d, slice_bits = %d\n",
 			 (dsc_params->rct_on), reg_val, num_extra_mux_bits, slice_bits);
 
 		final_offset = rc_model_size + num_extra_mux_bits -
@@ -1047,7 +1050,8 @@ static void mtk_dsc_config(struct mtk_ddp_comp *comp,
 
 	bit_per_pixel = dsc_params->bit_per_pixel;
 	bit_per_channel = dsc_params->bit_per_channel;
-	line_buf_depth = dsc_params->bit_per_channel + 1;
+	line_buf_depth = (dsc_param_load_mode != 1) ?
+		dsc_params->dsc_line_buf_depth : dsc_params->bit_per_channel + 1;
 
 	if (dsc_params->enable == 1) {
 		DDPINFO("%s, w:%d, h:%d, slice_mode:%d,slice(%d,%d),bpp:%d\n",
@@ -1237,8 +1241,10 @@ static void mtk_dsc_config(struct mtk_ddp_comp *comp,
 		else
 			reg_val |= (dsc_params->bit_per_pixel << 8);
 
-		bp_enable = 1;
 		reg_val |= (dsc_params->rct_on<< 18);
+
+		bp_enable = (dsc_param_load_mode != 1) ?
+			dsc_params->bp_enable : 1;
 		reg_val |= (bp_enable << 19);
 
 		mtk_ddp_write_relaxed(comp,	reg_val,
@@ -1289,7 +1295,7 @@ static void mtk_dsc_config(struct mtk_ddp_comp *comp,
 			   ((slice_bits - num_extra_mux_bits) % mux_word_size != 0)) {
 			num_extra_mux_bits--;
 		}
-		DDPMSG("RCT_ON = 0x%X, num_extra_mux_bits = %d->%d, slice_bits = %d\n",
+		DDPINFO("RCT_ON = 0x%X, num_extra_mux_bits = %d->%d, slice_bits = %d\n",
 			 (dsc_params->rct_on), reg_val, num_extra_mux_bits, slice_bits);
 
 		final_offset = rc_model_size + num_extra_mux_bits -

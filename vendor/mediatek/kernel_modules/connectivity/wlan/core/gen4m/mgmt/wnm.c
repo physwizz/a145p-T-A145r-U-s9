@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSD-2-Clause
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Copyright (c) 2021 MediaTek Inc.
  */
@@ -108,7 +108,7 @@ void wnmWNMAction(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 		/* btm offload */
 		wnmRecvBTMRequest(prAdapter, prSwRfb);
 #else
-		DBGLOG(RX, DEBUG,
+		DBGLOG(RX, INFO,
 		       "WNM: action frame %d, try to send to supplicant\n",
 		       prRxFrame->ucAction);
 		aisFuncValidateRxActionFrame(prAdapter, prSwRfb);
@@ -117,7 +117,7 @@ void wnmWNMAction(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 		break;
 	case ACTION_WNM_NOTIFICATION_REQUEST:
 	default:
-		DBGLOG(RX, DEBUG,
+		DBGLOG(RX, INFO,
 		       "WNM: action frame %d, try to send to supplicant\n",
 		       prRxFrame->ucAction);
 		aisFuncValidateRxActionFrame(prAdapter, prSwRfb);
@@ -508,7 +508,7 @@ void wnmSendBTMResponseFrame(struct ADAPTER *adapter,
 		 */
 		*pucOptInfo++ = ELEM_ID_VENDOR;
 		*pucOptInfo++ = 7;
-		WLAN_SET_FIELD_BE32(pucOptInfo, VENDOR_IE_TYPE_MBO);
+		WLAN_SET_FIELD_BE32(pucOptInfo, MBO_IE_VENDOR_TYPE);
 		pucOptInfo += 4;
 		*pucOptInfo++ = MBO_ATTR_ID_TRANSITION_REJECT_REASON;
 		*pucOptInfo++ = 1;
@@ -533,9 +533,7 @@ void wnmSendBTMResponseFrame(struct ADAPTER *adapter,
 		     pfTxDoneHandler, MSDU_RATE_MODE_AUTO);
 
 	nicTxConfigPktControlFlag(prMsduInfo,
-			MSDU_CONTROL_FLAG_FORCE_LINK |
-			MSDU_CONTROL_FLAG_DIS_MAT,
-			TRUE);
+			MSDU_CONTROL_FLAG_FORCE_LINK, TRUE);
 
 	/* 5 Enqueue the frame to send this action frame. */
 	nicTxEnqueueMsdu(adapter, prMsduInfo);
@@ -677,7 +675,6 @@ void wnmRecvBTMRequest(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 	uint8_t fgNeedResponse = FALSE;
 	uint8_t ucStatus = 0;
 	struct BSS_DESC *prBssDesc;
-	struct AIS_FSM_INFO *ais = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 
 	prRxFrame = (struct ACTION_BTM_REQ_FRAME *) prSwRfb->pvHeader;
 	if (!prRxFrame)
@@ -692,6 +689,10 @@ void wnmRecvBTMRequest(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 	prBssDesc = scanSearchBssDescByBssid(prAdapter, prRxFrame->aucBSSID);
 	prBtmParam = aisGetBTMParam(prAdapter, ucBssIndex);
 	prBtmParam->ucRspBssIndex = ucBssIndex;
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+	prBtmParam->ucRspBssIndex = mldGetBssIndexByHwBand(prAdapter,
+		prSwRfb->ucHwBandIdx, ucBssIndex);
+#endif
 
 	DBGLOG(WNM, INFO,
 	       "BTM: Req 0x%x, VInt %d, DiscTimer %d, Token %d\n",
@@ -826,13 +827,6 @@ void wnmRecvBTMRequest(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 		}
 	}
 
-	if (ais->ucAisIndex != AIS_DEFAULT_INDEX) {
-		DBGLOG(WNM, INFO, "WNM: [wlan%d] not support btm roaming\n",
-			ais->ucAisIndex);
-		ucStatus = WNM_BSS_TM_REJECT_UNSPECIFIED;
-		goto send_response;
-	}
-
 	if (prAdapter->rWifiVar.u4RejectBtmReqReason) {
 		DBGLOG(WNM, INFO, "WNM: reject btm req reason=%d\n",
 			prAdapter->rWifiVar.u4RejectBtmReqReason);
@@ -899,8 +893,7 @@ static void wnmMulAPAgentBTMRequestDisassocTimerFunc(
 		p2pFuncDisconnect(prAdapter,
 			prBssInfo, prStaRec,
 			TRUE,
-			REASON_CODE_DISASSOC_INACTIVITY,
-			MAC_FRAME_DEAUTH, TRUE);
+			REASON_CODE_DISASSOC_INACTIVITY);
 }
 
 static uint32_t wnmMulAPAgentBTMRequestTxDone(struct ADAPTER *prAdapter,
@@ -1147,6 +1140,7 @@ void wnmMulAPAgentRecvBTMResponse(struct ADAPTER *prAdapter,
 		"[SAP_Test] ucStatusCode = %u\n", prRxFrame->ucStatusCode);
 	DBGLOG(WNM, INFO,
 		"[SAP_Test] ucBssTermDelay = %u\n", prRxFrame->ucBssTermDelay);
+
 	if (prSwRfb->u2PacketLen >= u2TmpLen + MAC_ADDR_LEN &&
 		prRxFrame->ucStatusCode == BSS_TRANSITION_MGT_STATUS_ACCEPT) {
 		COPY_MAC_ADDR(prBtmReport->mDestBssid, pucOptInfo);

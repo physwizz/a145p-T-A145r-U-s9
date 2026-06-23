@@ -1748,11 +1748,6 @@ static int nu2115a_charger_probe(struct i2c_client *client)
 
     mutex_init(&chip->i2c_rw_lock);
     mutex_init(&chip->data_lock);
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 start*/
-    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
-    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_NU2115AWCNB);
-    #endif
-    /*A06 code add for AL7160AV-91 by chenyulin at 20250101 end*/
     ret = nu2115a_detect_device(chip);
     if (ret) {
         nu_err("No nu2115a device found!\n");
@@ -1810,6 +1805,11 @@ static int nu2115a_charger_probe(struct i2c_client *client)
     g_gxy_cp_ops.get_otg_txmode = nu2115a_usbpd_get_otg_txmode;
     chip->otg_tx_mode = false;
     /*A06_V code for SR-AL7160V-01-92 by xiongxiaoliang at 20240904 end*/
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 start*/
+    #if IS_ENABLED(CONFIG_HQ_PROJECT_O8)
+    gxy_bat_set_cpinfo(GXY_BAT_CP_INFO_NU2115AWCNB);
+    #endif
+    /*A06_V code for AL7160AV-532 by yexuedong at 20250703 end*/
     s_is_nu2115a_probe_success = true;
     nu_err("nu2115a probe successfully, Part Num:%d\n!", chip->part_no);
 
